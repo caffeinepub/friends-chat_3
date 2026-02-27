@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T03:23:15.680Z",
+  "generatedAt": "2026-02-27T04:03:46.411Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -11,24 +11,30 @@
     "implemented": 2,
     "items": [
       {
-        "id": "REQ-19",
-        "summary": "Fix the app startup hang where ChatView displays an infinite 'Loading your profile...' spinner and never transitions to the main UI. The profile loading state must resolve within a reasonable timeout (e.g., 10 seconds) regardless of whether the backend returns a profile, returns null, or errors. If the backend call fails or returns no profile, ChatView must exit the loading state and either show the DisplayNamePrompt/ProfileSetupModal for new users or render the main UI for returning users — the spinner must never block the UI indefinitely.",
+        "id": "REQ-23",
+        "summary": "Audit and fix the Internet Identity login flow in ChatView and useInternetIdentity so that a user can successfully initiate and complete login. The login button must be visible and interactive, the AuthClient must open the Internet Identity popup without errors, and after authentication the app must transition from the unauthenticated state to the authenticated/profile-setup state without hanging or throwing errors.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/ChatView.tsx"
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/hooks/useInternetIdentity.ts",
+          "frontend/src/components/DisplayNamePrompt.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/components/ChatView.tsx"
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/components/DisplayNamePrompt.tsx"
         ]
       },
       {
-        "id": "REQ-20",
-        "summary": "Audit the useQueries.ts getUserProfile hook and the ChatView loading gate logic to identify why the loading state never resolves. Common causes to check and fix: (1) the React Query query never transitions out of 'loading' status because the actor is not yet initialised when the query fires; (2) the query is dependent on an actor ref that stays null, causing it to remain in a pending/loading state forever; (3) ChatView checks a loading flag that is never set to false when the query result is null or undefined. Ensure the query has a proper enabled condition, a sensible staleTime/retry policy, and that ChatView's loading gate correctly handles all terminal query states (success with data, success with null, and error).",
+        "id": "REQ-24",
+        "summary": "Audit the useActor hook initialisation sequence to ensure that once a user is authenticated via Internet Identity, the backend actor is created with the correct authenticated identity and is non-null before any backend calls are made. If the actor fails to initialise after login, add a retry mechanism and surface a user-facing error message rather than silently hanging.",
         "status": "implemented",
         "plannedFiles": [
+          "frontend/src/hooks/useActor.ts",
+          "frontend/src/components/ChatView.tsx",
           "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
+          "frontend/src/components/ChatView.tsx",
           "frontend/src/hooks/useQueries.ts"
         ]
       }
@@ -40,7 +46,9 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/ChatView.tsx",
-    "frontend/src/components/PrivateChatView.tsx",
+    "frontend/src/components/DisplayNamePrompt.tsx",
+    "frontend/src/components/FriendsPanel.tsx",
+    "frontend/src/components/ProfileSetupModal.tsx",
     "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",

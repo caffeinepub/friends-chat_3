@@ -3,7 +3,7 @@ import { UserProfile, FriendRequest } from '../backend';
 import {
   useSearchUsers,
   useSendFriendRequest,
-  usePendingFriendRequests,
+  useGetPendingFriendRequests,
   useFriendsProfiles,
   useAcceptFriendRequest,
   useDeclineFriendRequest,
@@ -62,7 +62,7 @@ export default function FriendsPanel({
   const { data: searchResults = [], isLoading: isSearching } = useSearchUsers(
     searchQuery.trim().length >= 1 ? searchQuery.trim() : ''
   );
-  const { data: pendingRequests = [] } = usePendingFriendRequests();
+  const { data: pendingRequests = [] } = useGetPendingFriendRequests();
   const { data: friendsProfiles = [], isLoading: friendsLoading } = useFriendsProfiles();
   const sendFriendRequest = useSendFriendRequest();
 

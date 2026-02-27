@@ -1,11 +1,13 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 21,
+  "projectStateVersion": 25,
   "summary": "A chat app for a user and their friends to communicate, with plans to add a friends/contacts system including adding friends by username, seeing who's online, and private chats. FaceTime (video calling) feature has been requested.",
   "architectural_notes": [],
   "known_issues": [
     "Remote audio not audible during video calls (Version 7)",
-    "Main UI tabs/sections (messages, video call, friends) not visible or missing in Version 8"
+    "Main UI tabs/sections (messages, video call, friends) not visible or missing in Version 8",
+    "'Actor is not available' error thrown when user submits a display name during profile setup (Version 10)",
+    "User cannot log in (Version 11)"
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -144,6 +146,38 @@
         "REQ-20"
       ],
       "version": 1
+    },
+    {
+      "id": "feature-fix-the-actor-is-not-available-error-that-occurs-when-a-user-submits-a-display-name-in-displaynameprompt-or-profilesetupmodal-the-createuserprofile-mutation-in-usequeries-ts-must-not-be-called-until-the-backend-actor-is-fully-initialised-add-a-guard-so-the-mutation-is-only-invoked-when-the-actor-reference-is-non-null-and-surface-a-clear-inline-error-message-e-g-unable-to-connect-please-wait-a-moment-and-try-again-if-the-actor-is-still-unavailable-when-the-user-submits-rather-than-throwing-or-silently-failing",
+      "title": "Fix the 'actor is not available' error that occurs when a user submits a display name in DisplayNamePrompt or ProfileSetupModal. The createUserProfile mutation in useQueries.ts must not be called until the backend actor is fully initialised. Add a guard so the mutation is only invoked when the actor reference is non-null, and surface a clear inline error message (e.g., 'Unable to connect — please wait a moment and try again') if the actor is still unavailable when the user submits, rather than throwing or silently failing.",
+      "reqIds": [
+        "REQ-21"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-in-usequeries-ts-ensure-the-useactor-hook-s-actor-value-is-correctly-threaded-into-the-createuserprofile-mutation-function-if-the-actor-is-null-or-undefined-at-mutation-call-time-the-mutation-should-reject-gracefully-with-a-descriptive-error-rather-than-attempting-to-call-methods-on-a-null-reference-additionally-verify-that-the-useactor-hook-initialises-the-actor-before-the-user-interaction-window-and-that-any-retry-or-re-initialisation-logic-is-in-place-so-transient-actor-not-available-states-resolve-automatically",
+      "title": "In useQueries.ts, ensure the useActor hook's actor value is correctly threaded into the createUserProfile mutation function. If the actor is null or undefined at mutation call time, the mutation should reject gracefully with a descriptive error rather than attempting to call methods on a null reference. Additionally, verify that the useActor hook initialises the actor before the user interaction window and that any retry or re-initialisation logic is in place so transient 'actor not available' states resolve automatically.",
+      "reqIds": [
+        "REQ-22"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-audit-and-fix-the-internet-identity-login-flow-in-chatview-and-useinternetidentity-so-that-a-user-can-successfully-initiate-and-complete-login-the-login-button-must-be-visible-and-interactive-the-authclient-must-open-the-internet-identity-popup-without-errors-and-after-authentication-the-app-must-transition-from-the-unauthenticated-state-to-the-authenticated-profile-setup-state-without-hanging-or-throwing-errors",
+      "title": "Audit and fix the Internet Identity login flow in ChatView and useInternetIdentity so that a user can successfully initiate and complete login. The login button must be visible and interactive, the AuthClient must open the Internet Identity popup without errors, and after authentication the app must transition from the unauthenticated state to the authenticated/profile-setup state without hanging or throwing errors.",
+      "reqIds": [
+        "REQ-23"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-audit-the-useactor-hook-initialisation-sequence-to-ensure-that-once-a-user-is-authenticated-via-internet-identity-the-backend-actor-is-created-with-the-correct-authenticated-identity-and-is-non-null-before-any-backend-calls-are-made-if-the-actor-fails-to-initialise-after-login-add-a-retry-mechanism-and-surface-a-user-facing-error-message-rather-than-silently-hanging",
+      "title": "Audit the useActor hook initialisation sequence to ensure that once a user is authenticated via Internet Identity, the backend actor is created with the correct authenticated identity and is non-null before any backend calls are made. If the actor fails to initialise after login, add a retry mechanism and surface a user-facing error message rather than silently hanging.",
+      "reqIds": [
+        "REQ-24"
+      ],
+      "version": 1
     }
   ],
   "new_feature_requests": [
@@ -193,6 +227,18 @@
       "reqIds": [
         "REQ-14"
       ],
+      "status": "pending"
+    },
+    {
+      "id": "AR-13",
+      "summary": "Fix 'actor is not available' error when user enters a display name during profile setup.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-14",
+      "summary": "Fix login issue - user cannot log in to the app.",
+      "reqIds": [],
       "status": "pending"
     }
   ],

@@ -1,61 +1,30 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useActor } from './useActor';
-import { UserProfile, FriendRequest, Message, MessageThread } from '../backend';
-import { Principal } from '@dfinity/principal';
+import { useInternetIdentity } from './useInternetIdentity';
+import type { UserProfile, FriendRequest, Message, MessageThread } from '../backend';
+import type { Principal } from '@dfinity/principal';
 
-// ── User Profile ─────────────────────────────────────────────────────────────
+// ── Profile ──────────────────────────────────────────────────────────────────
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
   const query = useQuery<UserProfile | null>({
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      const result = await actor.getCallerUserProfile();
-      return result ?? null;
+      return actor.getCallerUserProfile();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && !!identity,
     retry: false,
-    staleTime: 30000,
   });
 
-  // Return custom state that properly reflects actor dependency
   return {
     ...query,
     isLoading: actorFetching || query.isLoading,
     isFetched: !!actor && query.isFetched,
   };
-}
-
-export function useCreateUserProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ username, displayName }: { username: string; displayName: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.createUserProfile(username, displayName);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-    },
-  });
-}
-
-export function useSaveCallerUserProfile() {
-  const { actor } = useActor();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ username, displayName }: { username: string; displayName: string }) => {
-      if (!actor) throw new Error('Actor not available');
-      return actor.saveCallerUserProfile(username, displayName);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-    },
-  });
 }
 
 export function useGetUserProfile(principal: Principal | null) {
@@ -68,6 +37,51 @@ export function useGetUserProfile(principal: Principal | null) {
       return actor.getUserProfile(principal);
     },
     enabled: !!actor && !actorFetching && !!principal,
+  });
+}
+
+export function useSaveCallerUserProfile() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ username, displayName }: { username: string; displayName: string }) => {
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
+      return actor.saveCallerUserProfile(username, displayName);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+export function useCreateUserProfile() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ username, displayName }: { username: string; displayName: string }) => {
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
+      return actor.createUserProfile(username, displayName);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
+  });
+}
+
+export function useUpdateOnlineStatus() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (isOnline: boolean) => {
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
+      return actor.updateOnlineStatus(isOnline);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+    },
   });
 }
 
@@ -93,7 +107,7 @@ export function usePostMessage() {
 
   return useMutation({
     mutationFn: async ({ sender, content }: { sender: string; content: string }) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
       return actor.postMessage(sender, content);
     },
     onSuccess: () => {
@@ -104,8 +118,23 @@ export function usePostMessage() {
 
 // ── Friends ───────────────────────────────────────────────────────────────────
 
-export function usePendingFriendRequests() {
+export function useGetFriendsList() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<Principal[]>({
+    queryKey: ['friendsList'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getFriendsList();
+    },
+    enabled: !!actor && !actorFetching && !!identity,
+  });
+}
+
+export function useGetPendingFriendRequests() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
   return useQuery<FriendRequest[]>({
     queryKey: ['pendingFriendRequests'],
@@ -113,8 +142,30 @@ export function usePendingFriendRequests() {
       if (!actor) return [];
       return actor.getPendingFriendRequests();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && !!identity,
     refetchInterval: 10000,
+  });
+}
+
+// Alias for backwards compatibility with FriendsPanel
+export const usePendingFriendRequests = useGetPendingFriendRequests;
+
+export function useFriendsProfiles() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+  const friendsQuery = useGetFriendsList();
+
+  return useQuery<UserProfile[]>({
+    queryKey: ['friendsProfiles', friendsQuery.data?.map((p) => p.toString())],
+    queryFn: async () => {
+      if (!actor || !friendsQuery.data) return [];
+      const profiles = await Promise.all(
+        friendsQuery.data.map((principal) => actor.getUserProfile(principal))
+      );
+      return profiles.filter((p): p is UserProfile => p !== null);
+    },
+    enabled: !!actor && !actorFetching && !!identity && !!friendsQuery.data,
+    refetchInterval: 15000,
   });
 }
 
@@ -124,10 +175,12 @@ export function useSendFriendRequest() {
 
   return useMutation({
     mutationFn: async (toUser: Principal) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
       return actor.sendFriendRequest(toUser);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['friendsList'] });
+      queryClient.invalidateQueries({ queryKey: ['friendsProfiles'] });
       queryClient.invalidateQueries({ queryKey: ['pendingFriendRequests'] });
     },
   });
@@ -139,14 +192,13 @@ export function useAcceptFriendRequest() {
 
   return useMutation({
     mutationFn: async (fromUser: Principal) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
       return actor.acceptFriendRequest(fromUser);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pendingFriendRequests'] });
       queryClient.invalidateQueries({ queryKey: ['friendsList'] });
       queryClient.invalidateQueries({ queryKey: ['friendsProfiles'] });
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ['pendingFriendRequests'] });
     },
   });
 }
@@ -157,7 +209,7 @@ export function useDeclineFriendRequest() {
 
   return useMutation({
     mutationFn: async (fromUser: Principal) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
       return actor.declineFriendRequest(fromUser);
     },
     onSuccess: () => {
@@ -166,55 +218,55 @@ export function useDeclineFriendRequest() {
   });
 }
 
-export function useFriendsList() {
+export function useGetOnlineFriends() {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
   return useQuery<Principal[]>({
-    queryKey: ['friendsList'],
+    queryKey: ['onlineFriends'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getFriendsList();
+      return actor.getOnlineFriends();
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && !!identity,
     refetchInterval: 15000,
   });
 }
 
-export function useFriendsProfiles() {
+export function useSearchUsers(username: string) {
   const { actor, isFetching: actorFetching } = useActor();
-  const friendsQuery = useFriendsList();
+  const { identity } = useInternetIdentity();
 
   return useQuery<UserProfile[]>({
-    queryKey: ['friendsProfiles', friendsQuery.data?.map((p) => p.toString())],
+    queryKey: ['searchUsers', username],
     queryFn: async () => {
-      if (!actor || !friendsQuery.data) return [];
-      const profiles = await Promise.all(
-        friendsQuery.data.map((principal) => actor.getUserProfile(principal))
-      );
-      return profiles.filter((p): p is UserProfile => p !== null);
+      if (!actor || !username.trim()) return [];
+      return actor.searchUsersByUsername(username);
     },
-    enabled: !!actor && !actorFetching && !!friendsQuery.data,
+    enabled: !!actor && !actorFetching && !!identity && username.trim().length > 0,
+  });
+}
+
+export function useGetAllOnlineUsers() {
+  const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
+
+  return useQuery<UserProfile[]>({
+    queryKey: ['allOnlineUsers'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllOnlineUsers();
+    },
+    enabled: !!actor && !actorFetching && !!identity,
     refetchInterval: 15000,
   });
 }
 
-export function useSearchUsers(query: string) {
-  const { actor, isFetching: actorFetching } = useActor();
-
-  return useQuery<UserProfile[]>({
-    queryKey: ['searchUsers', query],
-    queryFn: async () => {
-      if (!actor || !query.trim()) return [];
-      return actor.searchUsersByUsername(query.trim());
-    },
-    enabled: !!actor && !actorFetching && query.trim().length > 0,
-  });
-}
-
-// ── Private Threads ───────────────────────────────────────────────────────────
+// ── Private threads ───────────────────────────────────────────────────────────
 
 export function useGetPrivateThread(threadId: Principal | null) {
   const { actor, isFetching: actorFetching } = useActor();
+  const { identity } = useInternetIdentity();
 
   return useQuery<MessageThread | null>({
     queryKey: ['privateThread', threadId?.toString()],
@@ -222,7 +274,7 @@ export function useGetPrivateThread(threadId: Principal | null) {
       if (!actor || !threadId) return null;
       return actor.getPrivateThread(threadId);
     },
-    enabled: !!actor && !actorFetching && !!threadId,
+    enabled: !!actor && !actorFetching && !!identity && !!threadId,
     refetchInterval: 5000,
   });
 }
@@ -232,26 +284,8 @@ export function useSendPrivateMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({
-      threadId,
-      content,
-      autoStart,
-    }: {
-      threadId: Principal;
-      content: string;
-      autoStart?: boolean;
-    }) => {
-      if (!actor) throw new Error('Actor not available');
-
-      if (autoStart) {
-        // Try to start the thread first; ignore error if it already exists
-        try {
-          await actor.startPrivateThread(threadId);
-        } catch {
-          // Thread may already exist — continue
-        }
-      }
-
+    mutationFn: async ({ threadId, content }: { threadId: Principal; content: string }) => {
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
       return actor.sendPrivateMessage(threadId, content);
     },
     onSuccess: (_data, variables) => {
@@ -266,7 +300,7 @@ export function useStartPrivateThread() {
 
   return useMutation({
     mutationFn: async (recipient: Principal) => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error('Actor not initialised — please wait a moment and try again.');
       return actor.startPrivateThread(recipient);
     },
     onSuccess: () => {

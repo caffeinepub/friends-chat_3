@@ -1,56 +1,31 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { useQueryClient } from '@tanstack/react-query';
+import { useActor } from '../hooks/useActor';
 import { useGetCallerUserProfile } from '../hooks/useQueries';
 import { useVideoCall } from '../hooks/useVideoCall';
+import { useQueryClient } from '@tanstack/react-query';
 import MessageFeed from './MessageFeed';
 import MessageInput from './MessageInput';
 import FriendsPanel from './FriendsPanel';
 import PrivateChatView from './PrivateChatView';
 import VideoCallModal from './VideoCallModal';
-import DisplayNamePrompt from './DisplayNamePrompt';
+import ProfileSetupModal from './ProfileSetupModal';
 import { UserProfile } from '../backend';
-import { MessageSquare, Users, LogOut, Video } from 'lucide-react';
-
-const LOADING_TIMEOUT_MS = 10000;
+import { Users, MessageSquare, LogIn, LogOut, Loader2, Heart } from 'lucide-react';
 
 export default function ChatView() {
-  const { identity, clear, login, loginStatus } = useInternetIdentity();
+  const { identity, login, clear, loginStatus, isInitializing } = useInternetIdentity();
+  const { actor, isFetching: actorFetching } = useActor();
   const queryClient = useQueryClient();
+
   const isAuthenticated = !!identity;
+  const isLoggingIn = loginStatus === 'logging-in';
 
   const {
     data: userProfile,
     isLoading: profileLoading,
-    isFetched,
-    isError: profileError,
+    isFetched: profileFetched,
   } = useGetCallerUserProfile();
-
-  // Timeout fallback: if loading takes more than 10s, force exit
-  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setLoadingTimedOut(false);
-      return;
-    }
-
-    // If already resolved, no need for timeout
-    if (isFetched || profileError) return;
-
-    const timer = setTimeout(() => {
-      setLoadingTimedOut(true);
-    }, LOADING_TIMEOUT_MS);
-
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, isFetched, profileError]);
-
-  // Reset timeout when auth state changes
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setLoadingTimedOut(false);
-    }
-  }, [isAuthenticated]);
 
   const [selectedFriend, setSelectedFriend] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'friends'>('chat');
@@ -69,11 +44,23 @@ export default function ChatView() {
     toggleCamera,
   } = useVideoCall();
 
-  // Determine if we're still in a loading state
-  // Exit loading when: query is fetched, errored, or timed out
-  const isStillLoading = isAuthenticated && profileLoading && !isFetched && !profileError && !loadingTimedOut;
+  const handleLogin = async () => {
+    try {
+      await login();
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error?.message === 'User is already authenticated') {
+        await clear();
+        setTimeout(() => login(), 300);
+      }
+    }
+  };
 
-  const showProfileSetup = isAuthenticated && !isStillLoading && (userProfile === null || userProfile === undefined) && !profileError;
+  const handleLogout = async () => {
+    await clear();
+    queryClient.clear();
+    setSelectedFriend(null);
+  };
 
   const handleStartVideoCall = (friend: UserProfile) => {
     setVideoCallFriend(friend);
@@ -87,159 +74,108 @@ export default function ChatView() {
     setVideoCallFriend(null);
   };
 
-  const handleLogout = async () => {
-    await clear();
-    queryClient.clear();
-    setSelectedFriend(null);
-    setLoadingTimedOut(false);
-  };
+  // ── Loading: identity initializing or actor spinning up after login ──────────
+  const isLoadingAuth = isInitializing || (isAuthenticated && actorFetching);
 
-  const handleLogin = async () => {
-    try {
-      await login();
-    } catch (error: any) {
-      if (error.message === 'User is already authenticated') {
-        await clear();
-        setTimeout(() => login(), 300);
-      }
-    }
-  };
+  if (isLoadingAuth) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground text-sm">
+          {isInitializing ? 'Initializing…' : 'Connecting to network…'}
+        </p>
+      </div>
+    );
+  }
 
-  // Not authenticated: show login screen
+  // ── Not authenticated: show login screen ─────────────────────────────────────
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        {/* Header */}
-        <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center gap-3 shadow-md">
-          <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Logo" className="w-9 h-9 rounded-full" />
-          <h1 className="text-xl font-bold tracking-tight">Friends Chat</h1>
-        </header>
-
-        {/* Login hero */}
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-md w-full text-center space-y-8">
-            <div className="space-y-3">
-              <img
-                src="/assets/generated/friends-chat-icon.dim_512x512.png"
-                alt="Friends Chat"
-                className="w-24 h-24 mx-auto rounded-2xl shadow-lg"
-              />
-              <h2 className="text-3xl font-bold text-foreground">Stay Connected</h2>
-              <p className="text-muted-foreground text-lg">
-                Chat with friends, send messages, and video call — all in one place.
-              </p>
+      <div className="flex flex-col min-h-screen bg-background">
+        <header className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-10">
+          <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Friends Chat" className="w-8 h-8 rounded-lg" />
+              <span className="font-bold text-lg text-foreground">Friends Chat</span>
             </div>
-
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
-                <MessageSquare className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">Public Chat</p>
-              </div>
-              <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
-                <Users className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">Friends</p>
-              </div>
-              <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
-                <Video className="w-6 h-6 text-primary mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">Video Calls</p>
-              </div>
-            </div>
-
             <button
               onClick={handleLogin}
-              disabled={loginStatus === 'logging-in'}
-              className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity disabled:opacity-50 shadow-md"
+              disabled={isLoggingIn}
+              className="flex items-center gap-2 px-5 py-2 rounded-full bg-primary text-primary-foreground font-medium hover:bg-primary/90 transition-colors disabled:opacity-60"
             >
-              {loginStatus === 'logging-in' ? 'Logging in…' : 'Login to Get Started'}
+              {isLoggingIn ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
+              {isLoggingIn ? 'Logging in…' : 'Login'}
             </button>
           </div>
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-16 text-center">
+          <img
+            src="/assets/generated/friends-chat-icon.dim_512x512.png"
+            alt="Friends Chat"
+            className="w-24 h-24 rounded-2xl shadow-lg mb-6"
+          />
+          <h1 className="text-4xl font-bold text-foreground mb-3">Friends Chat</h1>
+          <p className="text-muted-foreground text-lg max-w-md mb-8">
+            Stay connected with your friends. Send messages, make video calls, and more.
+          </p>
+          <button
+            onClick={handleLogin}
+            disabled={isLoggingIn}
+            className="flex items-center gap-2 px-8 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-lg hover:bg-primary/90 transition-colors disabled:opacity-60 shadow-md"
+          >
+            {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : <LogIn className="w-5 h-5" />}
+            {isLoggingIn ? 'Logging in…' : 'Login to get started'}
+          </button>
+          {loginStatus === 'error' as string && (
+            <p className="mt-4 text-destructive text-sm">Login failed. Please try again.</p>
+          )}
         </main>
 
-        <footer className="text-center py-4 text-xs text-muted-foreground">
-          © {new Date().getFullYear()} Friends Chat · Built with ❤️ using{' '}
-          <a
-            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'friends-chat')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline hover:text-primary"
-          >
-            caffeine.ai
-          </a>
+        <footer className="border-t border-border py-4 text-center text-xs text-muted-foreground">
+          <p>
+            © {new Date().getFullYear()} Friends Chat &nbsp;·&nbsp; Built with{' '}
+            <Heart className="inline w-3 h-3 text-primary fill-primary" /> using{' '}
+            <a
+              href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-foreground"
+            >
+              caffeine.ai
+            </a>
+          </p>
         </footer>
       </div>
     );
   }
 
-  // Loading profile — only shown while genuinely loading, max 10 seconds
-  if (isStillLoading) {
+  // ── Authenticated but profile still loading ───────────────────────────────────
+  if (isAuthenticated && actor && profileLoading && !profileFetched) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-          <p className="text-muted-foreground">Loading your profile…</p>
-        </div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground text-sm">Loading your profile…</p>
       </div>
     );
   }
 
-  // Profile error state (backend error, not just missing profile)
-  if (profileError && !loadingTimedOut) {
+  // ── Profile setup for new users ───────────────────────────────────────────────
+  const showProfileSetup =
+    isAuthenticated && !actorFetching && !!actor && profileFetched && userProfile === null;
+
+  if (showProfileSetup) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center gap-3 shadow-md">
-          <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Logo" className="w-9 h-9 rounded-full" />
-          <h1 className="text-xl font-bold tracking-tight">Friends Chat</h1>
-        </header>
-        <main className="flex-1 flex items-center justify-center p-6">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-foreground">Something went wrong</h2>
-              <p className="text-muted-foreground">
-                We couldn't load your profile. This might be a temporary issue.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] })}
-                className="bg-primary text-primary-foreground py-2 px-6 rounded-xl font-semibold hover:opacity-90 transition-opacity"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={handleLogout}
-                className="bg-muted text-muted-foreground py-2 px-6 rounded-xl font-semibold hover:opacity-90 transition-opacity"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </main>
+      <div className="min-h-screen bg-background">
+        <ProfileSetupModal onComplete={() => queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] })} />
       </div>
     );
   }
 
-  // Profile setup for new users (null profile = new user, or timed out = treat as new user)
-  if (showProfileSetup || loadingTimedOut) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center gap-3 shadow-md">
-          <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Logo" className="w-9 h-9 rounded-full" />
-          <h1 className="text-xl font-bold tracking-tight">Friends Chat</h1>
-        </header>
-        <main className="flex-1 flex items-center justify-center p-6">
-          <DisplayNamePrompt onComplete={() => {
-            setLoadingTimedOut(false);
-            queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-          }} />
-        </main>
-      </div>
-    );
-  }
-
-  // Main authenticated UI
+  // ── Main authenticated UI ─────────────────────────────────────────────────────
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
-      {/* Top Header */}
+      {/* Header */}
       <header className="bg-primary text-primary-foreground px-4 py-3 flex items-center gap-3 shadow-md flex-shrink-0 z-10">
         <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Logo" className="w-8 h-8 rounded-full" />
         <h1 className="text-lg font-bold tracking-tight flex-1">Friends Chat</h1>
@@ -302,7 +238,7 @@ export default function ChatView() {
 
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* ── FRIENDS SIDEBAR (desktop: always visible when toggled; mobile: tab) ── */}
+        {/* Friends sidebar (desktop) */}
         <aside
           className={`
             flex-shrink-0 border-r border-border bg-card overflow-hidden transition-all duration-200
@@ -310,9 +246,9 @@ export default function ChatView() {
             ${showFriendsSidebar ? 'md:w-72 lg:w-80' : 'md:w-0'}
           `}
         >
-          {showFriendsSidebar && (
+          {showFriendsSidebar && userProfile && (
             <FriendsPanel
-              currentUserProfile={userProfile!}
+              currentUserProfile={userProfile}
               onSelectFriend={(friend) => {
                 setSelectedFriend(friend);
                 setActiveTab('chat');
@@ -330,34 +266,34 @@ export default function ChatView() {
             ${activeTab === 'friends' ? 'flex' : 'hidden'}
           `}
         >
-          <FriendsPanel
-            currentUserProfile={userProfile!}
-            onSelectFriend={(friend) => {
-              setSelectedFriend(friend);
-              setActiveTab('chat');
-            }}
-            selectedFriend={selectedFriend}
-            onStartVideoCall={handleStartVideoCall}
-          />
+          {userProfile && (
+            <FriendsPanel
+              currentUserProfile={userProfile}
+              onSelectFriend={(friend) => {
+                setSelectedFriend(friend);
+                setActiveTab('chat');
+              }}
+              selectedFriend={selectedFriend}
+              onStartVideoCall={handleStartVideoCall}
+            />
+          )}
         </div>
 
-        {/* ── MAIN CHAT AREA ── */}
+        {/* Main chat area */}
         <main
           className={`
             flex-1 flex flex-col overflow-hidden
             ${activeTab === 'chat' ? 'flex' : 'hidden md:flex'}
           `}
         >
-          {selectedFriend ? (
-            /* Private Chat */
+          {selectedFriend && userProfile ? (
             <PrivateChatView
               friend={selectedFriend}
-              currentUserProfile={userProfile!}
+              currentUserProfile={userProfile}
               onBack={() => setSelectedFriend(null)}
               onStartVideoCall={() => handleStartVideoCall(selectedFriend)}
             />
           ) : (
-            /* Public Chat */
             <div className="flex-1 flex flex-col overflow-hidden">
               {/* Public chat header */}
               <div className="px-4 py-3 border-b border-border bg-card flex items-center gap-3 flex-shrink-0">
@@ -372,12 +308,12 @@ export default function ChatView() {
 
               {/* Message feed */}
               <div className="flex-1 overflow-hidden flex flex-col min-h-0">
-                <MessageFeed currentUserProfile={userProfile!} />
+                {userProfile && <MessageFeed currentUserProfile={userProfile} />}
               </div>
 
               {/* Message input */}
               <div className="flex-shrink-0 border-t border-border bg-card">
-                <MessageInput currentUserProfile={userProfile!} />
+                {userProfile && <MessageInput currentUserProfile={userProfile} />}
               </div>
             </div>
           )}

@@ -1,54 +1,55 @@
 {
   "kind": "build_request",
-  "title": "Fix infinite 'Loading your profile…' spinner on app load",
+  "title": "Fix login issue — user cannot log in to the app",
   "projectName": "Friends Chat",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-19",
-      "text": "Fix the app startup hang where ChatView displays an infinite 'Loading your profile...' spinner and never transitions to the main UI. The profile loading state must resolve within a reasonable timeout (e.g., 10 seconds) regardless of whether the backend returns a profile, returns null, or errors. If the backend call fails or returns no profile, ChatView must exit the loading state and either show the DisplayNamePrompt/ProfileSetupModal for new users or render the main UI for returning users — the spinner must never block the UI indefinitely.",
+      "id": "REQ-23",
+      "text": "Audit and fix the Internet Identity login flow in ChatView and useInternetIdentity so that a user can successfully initiate and complete login. The login button must be visible and interactive, the AuthClient must open the Internet Identity popup without errors, and after authentication the app must transition from the unauthenticated state to the authenticated/profile-setup state without hanging or throwing errors.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "It's been like this for 10 minutes"
+          "I can't login"
         ]
       },
       "acceptanceCriteria": [
-        "The 'Loading your profile...' spinner is never displayed for more than 10 seconds under any network or backend condition.",
-        "If the backend getUserProfile call resolves with a null/empty result, ChatView exits the loading state and shows the profile setup flow (DisplayNamePrompt or ProfileSetupModal).",
-        "If the backend getUserProfile call resolves with a valid profile, ChatView exits the loading state and renders the full main UI (message feed, friends sidebar, navigation).",
-        "If the backend getUserProfile call errors or times out, ChatView exits the loading state gracefully and shows an appropriate fallback (setup flow or an error message), not a permanent spinner.",
-        "On subsequent visits where a profile already exists, the app loads past the spinner quickly and renders the main chat UI without requiring any user action.",
-        "No unhandled promise rejections or console errors occur during the profile loading lifecycle."
+        "A clearly visible login button is rendered when the user is not authenticated.",
+        "Clicking the login button opens the Internet Identity authentication popup without throwing any console errors.",
+        "After successful authentication, the app transitions out of the unauthenticated state and renders either the DisplayNamePrompt/ProfileSetupModal (new users) or the main ChatView UI (returning users).",
+        "If the login popup is cancelled or fails, the app returns to the login screen gracefully without crashing.",
+        "No unhandled promise rejections or console errors occur during the full login lifecycle."
       ]
     },
     {
-      "id": "REQ-20",
-      "text": "Audit the useQueries.ts getUserProfile hook and the ChatView loading gate logic to identify why the loading state never resolves. Common causes to check and fix: (1) the React Query query never transitions out of 'loading' status because the actor is not yet initialised when the query fires; (2) the query is dependent on an actor ref that stays null, causing it to remain in a pending/loading state forever; (3) ChatView checks a loading flag that is never set to false when the query result is null or undefined. Ensure the query has a proper enabled condition, a sensible staleTime/retry policy, and that ChatView's loading gate correctly handles all terminal query states (success with data, success with null, and error).",
+      "id": "REQ-24",
+      "text": "Audit the useActor hook initialisation sequence to ensure that once a user is authenticated via Internet Identity, the backend actor is created with the correct authenticated identity and is non-null before any backend calls are made. If the actor fails to initialise after login, add a retry mechanism and surface a user-facing error message rather than silently hanging.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
+        ],
+        "quotes": [
+          "I can't login"
         ]
       },
       "acceptanceCriteria": [
-        "The getUserProfile React Query hook has an 'enabled' condition that prevents it from firing before the actor is ready, and correctly transitions to a non-loading state once the actor resolves.",
-        "ChatView's loading gate (the condition that shows the spinner) evaluates to false as soon as the profile query reaches any terminal state (success or error), not just when data is truthy.",
-        "If the actor initialisation itself hangs, a timeout or fallback mechanism ensures the UI is never permanently blocked."
+        "After a successful Internet Identity login, the useActor hook produces a non-null actor reference within a reasonable time (e.g., 5 seconds).",
+        "If actor initialisation fails, an inline error message is displayed and the user is not left on a blank or spinning screen.",
+        "Authenticated actor calls (e.g., getUserProfile) succeed after login without 'actor is not available' errors."
       ]
     }
   ],
   "constraints": [
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "Do not change the backend Motoko actor interface or data schema."
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts or frontend/src/hooks/useActor.ts directly — propose changes via wrapper components or safe alternatives if those files are immutable.",
+    "Do not alter the backend Motoko actor's public API."
   ],
   "nonGoals": [
-    "Adding new chat or friends features.",
-    "Changing the visual theme or layout once the loading issue is resolved.",
-    "Modifying the video call feature."
+    "Adding new authentication providers beyond Internet Identity.",
+    "Changes to the video call, friends panel, or message feed features unless directly related to the login fix."
   ],
   "imageRequirements": {
     "required": [],

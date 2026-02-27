@@ -1,14 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Fix the infinite "Loading your profile…" spinner in ChatView that permanently blocks the app UI on startup.
+**Goal:** Fix the Internet Identity login flow so that users can successfully log in to the Friends Chat app.
 
 **Planned changes:**
-- Audit `useQueries.ts` `getUserProfile` hook to ensure it has a proper `enabled` condition that prevents firing before the actor is ready, and that it correctly transitions out of loading state once the actor resolves.
-- Fix ChatView's loading gate so it evaluates to false on any terminal query state (success with data, success with null, or error) — not only when data is truthy.
-- Add a timeout/fallback (≤10 seconds) so the spinner is dismissed even if the backend call errors, times out, or returns null/undefined.
-- If the query resolves with no profile, exit the loading state and show the profile setup flow (DisplayNamePrompt or ProfileSetupModal).
-- If the query resolves with a valid profile, exit the loading state and render the main chat UI.
-- Ensure no unhandled promise rejections or console errors occur during the profile loading lifecycle.
+- Audit and fix the login button rendering so it is visible and interactive when the user is unauthenticated
+- Fix the Internet Identity popup flow so it opens without console errors and completes without hanging
+- Ensure the app transitions correctly after successful login (to profile setup for new users, or main chat for returning users)
+- Handle login cancellation or failure gracefully, returning to the login screen without crashing
+- Audit the actor initialisation sequence to ensure an authenticated actor is created and non-null after login
+- Add a retry mechanism for actor initialisation failures and surface a user-facing error message instead of silently hanging
 
-**User-visible outcome:** The app no longer hangs on the "Loading your profile…" spinner; users are taken to either the profile setup flow or the main chat UI within a few seconds of opening the app.
+**User-visible outcome:** Users can click the login button, complete Internet Identity authentication, and be taken into the app without errors or blank screens.

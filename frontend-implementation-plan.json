@@ -1,40 +1,59 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix infinite 'Loading your profile…' spinner on app load",
+  "title": "Fix login issue — user cannot log in to the app",
   "requirements": [
     {
-      "id": "REQ-19",
-      "summary": "Fix the infinite loading spinner by ensuring ChatView exits the loading state within 10 seconds regardless of backend response",
+      "id": "REQ-23",
+      "summary": "Audit and fix the Internet Identity login flow in ChatView and useInternetIdentity so that a user can successfully initiate and complete login",
       "acceptanceCriteria": [
-        "The 'Loading your profile...' spinner is never displayed for more than 10 seconds under any network or backend condition.",
-        "If the backend getUserProfile call resolves with a null/empty result, ChatView exits the loading state and shows the profile setup flow (DisplayNamePrompt or ProfileSetupModal).",
-        "If the backend getUserProfile call resolves with a valid profile, ChatView exits the loading state and renders the full main UI (message feed, friends sidebar, navigation).",
-        "If the backend getUserProfile call errors or times out, ChatView exits the loading state gracefully and shows an appropriate fallback (setup flow or an error message), not a permanent spinner.",
-        "On subsequent visits where a profile already exists, the app loads past the spinner quickly and renders the main chat UI without requiring any user action.",
-        "No unhandled promise rejections or console errors occur during the profile loading lifecycle."
+        "A clearly visible login button is rendered when the user is not authenticated.",
+        "Clicking the login button opens the Internet Identity authentication popup without throwing any console errors.",
+        "After successful authentication, the app transitions out of the unauthenticated state and renders either the DisplayNamePrompt/ProfileSetupModal (new users) or the main ChatView UI (returning users).",
+        "If the login popup is cancelled or fails, the app returns to the login screen gracefully without crashing.",
+        "No unhandled promise rejections or console errors occur during the full login lifecycle."
       ],
       "file_operations": [
         {
           "path": "frontend/src/components/ChatView.tsx",
           "operation": "modify",
-          "description": "Fix the loading gate logic that displays the spinner. Change the condition from checking only `profileLoading` to also evaluating terminal query states. Ensure the loading gate evaluates to false when the profile query reaches any terminal state (isSuccess or isError), not just when userProfile is truthy. Add a 10-second timeout mechanism using setTimeout that forcibly exits the loading state if the query hasn't resolved. Update the loading condition to: show spinner only when (actorFetching || profileLoading) AND a timeout hasn't been reached AND the query hasn't reached a terminal state. Handle the case where userProfile is null (new user) or undefined (error/no data) by showing the profile setup flow instead of staying in the loading state."
+          "description": "Audit and fix the authentication state rendering logic to ensure a visible login button is always shown when the user is unauthenticated. Remove any conditional logic that might hide the login UI. Ensure proper error boundaries are in place to catch and display authentication errors gracefully. Verify that after successful login the component correctly transitions to either profile setup (for new users) or the main chat UI (for returning users) based on the userProfile state."
+        },
+        {
+          "path": "frontend/src/hooks/useInternetIdentity.ts",
+          "operation": "modify",
+          "description": "Audit the login method implementation to ensure it properly handles the AuthClient.login call, catches and propagates errors appropriately, and updates the identity state correctly after successful authentication. Add explicit error handling for common failure cases (popup cancelled, network errors, timeout). Ensure the clear/logout method properly resets all identity state. Verify the component usage instructions from the authorization component are followed correctly."
+        },
+        {
+          "path": "frontend/src/components/DisplayNamePrompt.tsx",
+          "operation": "modify",
+          "description": "Review and strengthen the actor availability guard to ensure the submit button remains disabled and shows a clear message if the actor is not yet initialized after login. Add retry logic or a manual retry button if actor initialization fails. Ensure error messages are user-friendly and actionable."
         }
       ]
     },
     {
-      "id": "REQ-20",
-      "summary": "Audit and fix the getUserProfile hook to ensure it transitions out of loading state correctly when the actor is ready",
+      "id": "REQ-24",
+      "summary": "Audit the useActor hook initialisation sequence to ensure the backend actor is created with the correct authenticated identity after login and add retry mechanism for failures",
       "acceptanceCriteria": [
-        "The getUserProfile React Query hook has an 'enabled' condition that prevents it from firing before the actor is ready, and correctly transitions to a non-loading state once the actor resolves.",
-        "ChatView's loading gate (the condition that shows the spinner) evaluates to false as soon as the profile query reaches any terminal state (success or error), not just when data is truthy.",
-        "If the actor initialisation itself hangs, a timeout or fallback mechanism ensures the UI is never permanently blocked."
+        "After a successful Internet Identity login, the useActor hook produces a non-null actor reference within a reasonable time (e.g., 5 seconds).",
+        "If actor initialisation fails, an inline error message is displayed and the user is not left on a blank or spinning screen.",
+        "Authenticated actor calls (e.g., getUserProfile) succeed after login without 'actor is not available' errors."
       ],
       "file_operations": [
         {
+          "path": "frontend/src/hooks/useActor.ts",
+          "operation": "modify",
+          "description": "Audit the actor creation logic to ensure it correctly receives and uses the authenticated identity from useInternetIdentity after login. Add a timeout mechanism (e.g., 5-10 seconds) to detect if actor initialization is taking too long. Implement a retry mechanism with exponential backoff if the initial actor creation fails. Expose an error state that components can use to display user-facing error messages. Ensure the React Query setup properly handles the actor dependency and refetches when the identity changes."
+        },
+        {
+          "path": "frontend/src/components/ChatView.tsx",
+          "operation": "modify",
+          "description": "Integrate the actor error state from useActor and display a clear inline error message with a retry button if actor initialization fails after login. Prevent rendering the main chat UI or profile setup flow until the actor is confirmed available. Show a loading state with a timeout indicator if actor initialization is taking longer than expected."
+        },
+        {
           "path": "frontend/src/hooks/useQueries.ts",
           "operation": "modify",
-          "description": "Fix the useGetCallerUserProfile hook to properly handle actor initialization and loading states. Add an 'enabled' condition that checks both actor availability and actorFetching state: enabled: !!actor && !actorFetching. Return a custom loading state that properly reflects actor dependency: isLoading: actorFetching || query.isLoading, and isFetched: !!actor && query.isFetched. Ensure the query includes retry: false to avoid infinite retry loops. Add a staleTime configuration (e.g., 30000ms) to prevent unnecessary refetches. Verify the queryFn properly throws an error if actor is unavailable to trigger the error state rather than hanging indefinitely."
+          "description": "Review all query hooks to ensure they properly handle the case where the actor is temporarily unavailable after login. Add enabled flags that check both actor availability and authentication state. Ensure queries do not execute and fail silently before the actor is ready. Add proper error handling that surfaces backend errors to the UI layer."
         }
       ]
     }
