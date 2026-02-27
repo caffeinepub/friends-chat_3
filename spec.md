@@ -1,13 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Restore the missing main UI sections (message feed, friends panel, and video call UI) in the Friends Chat application so all three are visible and accessible after login.
+**Goal:** Fix the infinite "Loading your profile…" spinner in ChatView that permanently blocks the app UI on startup.
 
 **Planned changes:**
-- Fix ChatView's conditional rendering logic so that after profile setup is complete, the full UI renders unconditionally without being gated or hidden.
-- Ensure the public message feed (MessageFeed + MessageInput) is always mounted and visible in ChatView.
-- Ensure the Friends panel (FriendsPanel) is always mounted as a sidebar alongside the message feed, not replacing it.
-- Ensure the video call button is present in both FriendListItem rows and the PrivateChatView header, and that VideoCallModal opens correctly with camera feed and controls.
-- Fix any state management issues that cause sections to disappear when navigating between public chat, private chat, and the friends panel.
+- Audit `useQueries.ts` `getUserProfile` hook to ensure it has a proper `enabled` condition that prevents firing before the actor is ready, and that it correctly transitions out of loading state once the actor resolves.
+- Fix ChatView's loading gate so it evaluates to false on any terminal query state (success with data, success with null, or error) — not only when data is truthy.
+- Add a timeout/fallback (≤10 seconds) so the spinner is dismissed even if the backend call errors, times out, or returns null/undefined.
+- If the query resolves with no profile, exit the loading state and show the profile setup flow (DisplayNamePrompt or ProfileSetupModal).
+- If the query resolves with a valid profile, exit the loading state and render the main chat UI.
+- Ensure no unhandled promise rejections or console errors occur during the profile loading lifecycle.
 
-**User-visible outcome:** Users see the complete chat UI on load — a scrollable public message feed with input bar, a friends sidebar with search/friend requests/friend list, and working video call buttons — with no blank screens or missing sections.
+**User-visible outcome:** The app no longer hangs on the "Loading your profile…" spinner; users are taken to either the profile setup flow or the main chat UI within a few seconds of opening the app.

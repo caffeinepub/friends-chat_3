@@ -1,31 +1,15 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T03:12:20.263Z",
-  "summary": "The diff implements most of REQ-17 and REQ-18 requirements. ChatView is rebuilt with persistent friends sidebar, public/private chat areas, VideoCallModal integration, auth gating, and profile setup flow. All major UI sections (MessageFeed, MessageInput, FriendsPanel, PrivateChatView, VideoCallModal) are present. FriendListItem includes a video call button, PrivateChatView header includes a video call button. DisplayNamePrompt handles new-user onboarding and calls onComplete to transition to the full UI. The implementation appears comprehensive with a minor concern about the video call button visibility in FriendListItem for non-selected items.",
-  "missing_requirements": [
-    {
-      "id": "REQ-17",
-      "requirement": "Each friend list item displays a video call button that is always visible and accessible",
-      "reason": "In FriendListItem.tsx, the video call button for non-selected friends has 'opacity-0 group-hover:opacity-100' CSS classes, making it invisible at zero opacity until hovered. This could fail the acceptance criteria requiring no hidden or zero-height containers and the button to be readily accessible.",
-      "evidence": [
-        "frontend/src/components/FriendListItem.tsx"
-      ]
-    }
-  ],
+  "generatedAt": "2026-02-27T03:23:15.676Z",
+  "summary": "The diff implements fixes for the infinite 'Loading your profile…' spinner as requested. ChatView.tsx adds a 10-second timeout fallback, proper loading gate logic handling all terminal states (success with data, success with null, error, timeout), and graceful fallback UI. useQueries.ts adds an 'enabled' condition tied to actor readiness, retry: false, staleTime: 30000, and custom isLoading/isFetched states accounting for actor initialization. These changes address the core requirements of REQ-19 and REQ-20.",
+  "missing_requirements": [],
   "hallucinated_features": [],
-  "confidence": 0.8,
+  "confidence": 0.82,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/ChatView.tsx",
-    "frontend/src/components/DisplayNamePrompt.tsx",
-    "frontend/src/components/FriendListItem.tsx",
-    "frontend/src/components/FriendRequestItem.tsx",
-    "frontend/src/components/FriendsPanel.tsx",
-    "frontend/src/components/MessageFeed.tsx",
-    "frontend/src/components/MessageInput.tsx",
     "frontend/src/components/PrivateChatView.tsx",
-    "frontend/src/components/VideoCallModal.tsx",
     "frontend/src/hooks/useQueries.ts",
     "project_state.json"
   ]

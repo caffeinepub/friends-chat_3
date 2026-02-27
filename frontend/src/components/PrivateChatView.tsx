@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { UserProfile } from '../backend';
-import { usePrivateThread, useSendPrivateMessage } from '../hooks/useQueries';
+import { useGetPrivateThread, useSendPrivateMessage } from '../hooks/useQueries';
 import { ArrowLeft, Video, Send, Loader2 } from 'lucide-react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 
@@ -32,7 +32,7 @@ export default function PrivateChatView({
   const threadStartedRef = useRef(false);
 
   const friendPrincipal = friend.principal;
-  const { data: thread, isLoading: threadLoading } = usePrivateThread(friendPrincipal);
+  const { data: thread, isLoading: threadLoading } = useGetPrivateThread(friendPrincipal);
   const sendMessage = useSendPrivateMessage();
 
   // Start thread once
@@ -73,7 +73,7 @@ export default function PrivateChatView({
           <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
             {getInitials(friend.displayName)}
           </div>
-          {(friend.isOnline) && (
+          {friend.isOnline && (
             <span className="absolute bottom-0 right-0 w-2 h-2 bg-green-500 border-2 border-card rounded-full" />
           )}
         </div>

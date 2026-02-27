@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
 import { useGetCallerUserProfile } from '../hooks/useQueries';
@@ -10,22 +10,53 @@ import PrivateChatView from './PrivateChatView';
 import VideoCallModal from './VideoCallModal';
 import DisplayNamePrompt from './DisplayNamePrompt';
 import { UserProfile } from '../backend';
-import { MessageSquare, Users, LogOut, Video, Menu, X } from 'lucide-react';
+import { MessageSquare, Users, LogOut, Video } from 'lucide-react';
+
+const LOADING_TIMEOUT_MS = 10000;
 
 export default function ChatView() {
   const { identity, clear, login, loginStatus } = useInternetIdentity();
   const queryClient = useQueryClient();
   const isAuthenticated = !!identity;
 
-  const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
+  const {
+    data: userProfile,
+    isLoading: profileLoading,
+    isFetched,
+    isError: profileError,
+  } = useGetCallerUserProfile();
+
+  // Timeout fallback: if loading takes more than 10s, force exit
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLoadingTimedOut(false);
+      return;
+    }
+
+    // If already resolved, no need for timeout
+    if (isFetched || profileError) return;
+
+    const timer = setTimeout(() => {
+      setLoadingTimedOut(true);
+    }, LOADING_TIMEOUT_MS);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, isFetched, profileError]);
+
+  // Reset timeout when auth state changes
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLoadingTimedOut(false);
+    }
+  }, [isAuthenticated]);
 
   const [selectedFriend, setSelectedFriend] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState<'chat' | 'friends'>('chat');
   const [showFriendsSidebar, setShowFriendsSidebar] = useState(true);
   const [isVideoCallActive, setIsVideoCallActive] = useState(false);
   const [videoCallFriend, setVideoCallFriend] = useState<UserProfile | null>(null);
-
-  const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
   const {
     localVideoRef,
@@ -38,7 +69,11 @@ export default function ChatView() {
     toggleCamera,
   } = useVideoCall();
 
-  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+  // Determine if we're still in a loading state
+  // Exit loading when: query is fetched, errored, or timed out
+  const isStillLoading = isAuthenticated && profileLoading && !isFetched && !profileError && !loadingTimedOut;
+
+  const showProfileSetup = isAuthenticated && !isStillLoading && (userProfile === null || userProfile === undefined) && !profileError;
 
   const handleStartVideoCall = (friend: UserProfile) => {
     setVideoCallFriend(friend);
@@ -56,6 +91,7 @@ export default function ChatView() {
     await clear();
     queryClient.clear();
     setSelectedFriend(null);
+    setLoadingTimedOut(false);
   };
 
   const handleLogin = async () => {
@@ -134,8 +170,8 @@ export default function ChatView() {
     );
   }
 
-  // Loading profile
-  if (profileLoading || !isFetched) {
+  // Loading profile — only shown while genuinely loading, max 10 seconds
+  if (isStillLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
@@ -146,8 +182,8 @@ export default function ChatView() {
     );
   }
 
-  // Profile setup for new users
-  if (showProfileSetup) {
+  // Profile error state (backend error, not just missing profile)
+  if (profileError && !loadingTimedOut) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center gap-3 shadow-md">
@@ -155,7 +191,46 @@ export default function ChatView() {
           <h1 className="text-xl font-bold tracking-tight">Friends Chat</h1>
         </header>
         <main className="flex-1 flex items-center justify-center p-6">
-          <DisplayNamePrompt onComplete={() => queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] })} />
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-bold text-foreground">Something went wrong</h2>
+              <p className="text-muted-foreground">
+                We couldn't load your profile. This might be a temporary issue.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] })}
+                className="bg-primary text-primary-foreground py-2 px-6 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={handleLogout}
+                className="bg-muted text-muted-foreground py-2 px-6 rounded-xl font-semibold hover:opacity-90 transition-opacity"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Profile setup for new users (null profile = new user, or timed out = treat as new user)
+  if (showProfileSetup || loadingTimedOut) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center gap-3 shadow-md">
+          <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Logo" className="w-9 h-9 rounded-full" />
+          <h1 className="text-xl font-bold tracking-tight">Friends Chat</h1>
+        </header>
+        <main className="flex-1 flex items-center justify-center p-6">
+          <DisplayNamePrompt onComplete={() => {
+            setLoadingTimedOut(false);
+            queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+          }} />
         </main>
       </div>
     );
@@ -231,7 +306,6 @@ export default function ChatView() {
         <aside
           className={`
             flex-shrink-0 border-r border-border bg-card overflow-hidden transition-all duration-200
-            ${/* Desktop */ ''}
             hidden md:flex md:flex-col
             ${showFriendsSidebar ? 'md:w-72 lg:w-80' : 'md:w-0'}
           `}

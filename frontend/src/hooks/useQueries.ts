@@ -12,12 +12,15 @@ export function useGetCallerUserProfile() {
     queryKey: ['currentUserProfile'],
     queryFn: async () => {
       if (!actor) throw new Error('Actor not available');
-      return actor.getCallerUserProfile();
+      const result = await actor.getCallerUserProfile();
+      return result ?? null;
     },
     enabled: !!actor && !actorFetching,
     retry: false,
+    staleTime: 30000,
   });
 
+  // Return custom state that properly reflects actor dependency
   return {
     ...query,
     isLoading: actorFetching || query.isLoading,
@@ -173,23 +176,24 @@ export function useFriendsList() {
       return actor.getFriendsList();
     },
     enabled: !!actor && !actorFetching,
+    refetchInterval: 15000,
   });
 }
 
 export function useFriendsProfiles() {
   const { actor, isFetching: actorFetching } = useActor();
-  const { data: friendsList = [] } = useFriendsList();
+  const friendsQuery = useFriendsList();
 
   return useQuery<UserProfile[]>({
-    queryKey: ['friendsProfiles', friendsList.map((p) => p.toString()).join(',')],
+    queryKey: ['friendsProfiles', friendsQuery.data?.map((p) => p.toString())],
     queryFn: async () => {
-      if (!actor || friendsList.length === 0) return [];
+      if (!actor || !friendsQuery.data) return [];
       const profiles = await Promise.all(
-        friendsList.map((principal) => actor.getUserProfile(principal))
+        friendsQuery.data.map((principal) => actor.getUserProfile(principal))
       );
       return profiles.filter((p): p is UserProfile => p !== null);
     },
-    enabled: !!actor && !actorFetching,
+    enabled: !!actor && !actorFetching && !!friendsQuery.data,
     refetchInterval: 15000,
   });
 }
@@ -200,31 +204,26 @@ export function useSearchUsers(query: string) {
   return useQuery<UserProfile[]>({
     queryKey: ['searchUsers', query],
     queryFn: async () => {
-      if (!actor || !query) return [];
-      return actor.searchUsersByUsername(query);
+      if (!actor || !query.trim()) return [];
+      return actor.searchUsersByUsername(query.trim());
     },
-    enabled: !!actor && !actorFetching && query.length > 0,
+    enabled: !!actor && !actorFetching && query.trim().length > 0,
   });
 }
 
 // ── Private Threads ───────────────────────────────────────────────────────────
 
-export function usePrivateThread(friendPrincipal: Principal | null) {
+export function useGetPrivateThread(threadId: Principal | null) {
   const { actor, isFetching: actorFetching } = useActor();
 
   return useQuery<MessageThread | null>({
-    queryKey: ['privateThread', friendPrincipal?.toString()],
+    queryKey: ['privateThread', threadId?.toString()],
     queryFn: async () => {
-      if (!actor || !friendPrincipal) return null;
-      try {
-        return await actor.getPrivateThread(friendPrincipal);
-      } catch {
-        // Thread may not exist yet
-        return null;
-      }
+      if (!actor || !threadId) return null;
+      return actor.getPrivateThread(threadId);
     },
-    enabled: !!actor && !actorFetching && !!friendPrincipal,
-    refetchInterval: 3000,
+    enabled: !!actor && !actorFetching && !!threadId,
+    refetchInterval: 5000,
   });
 }
 
@@ -233,21 +232,45 @@ export function useSendPrivateMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ threadId, content }: { threadId: Principal; content: string }) => {
+    mutationFn: async ({
+      threadId,
+      content,
+      autoStart,
+    }: {
+      threadId: Principal;
+      content: string;
+      autoStart?: boolean;
+    }) => {
       if (!actor) throw new Error('Actor not available');
-      // Try to send; if thread doesn't exist, start it first
-      try {
-        return await actor.sendPrivateMessage(threadId, content);
-      } catch (err: any) {
-        if (err?.message?.includes('Thread not found')) {
+
+      if (autoStart) {
+        // Try to start the thread first; ignore error if it already exists
+        try {
           await actor.startPrivateThread(threadId);
-          return await actor.sendPrivateMessage(threadId, content);
+        } catch {
+          // Thread may already exist — continue
         }
-        throw err;
       }
+
+      return actor.sendPrivateMessage(threadId, content);
     },
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['privateThread', variables.threadId.toString()] });
+    },
+  });
+}
+
+export function useStartPrivateThread() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (recipient: Principal) => {
+      if (!actor) throw new Error('Actor not available');
+      return actor.startPrivateThread(recipient);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['privateThread'] });
     },
   });
 }

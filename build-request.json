@@ -1,61 +1,54 @@
 {
   "kind": "build_request",
-  "title": "Restore missing Messages, Friends panel, and Video Call UI",
+  "title": "Fix infinite 'Loading your profile…' spinner on app load",
   "projectName": "Friends Chat",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-17",
-      "text": "Restore the main application layout in ChatView so that the public message feed (MessageFeed + MessageInput), the Friends panel (FriendsPanel), and the video call button/modal (VideoCallModal) are all visible and accessible. The root App renders ChatView, and ChatView must correctly mount and display all three sections — the chat area with the scrollable message feed and input bar, the friends sidebar panel, and the video call modal trigger — without any section being hidden, unmounted, or missing from the DOM.",
+      "id": "REQ-19",
+      "text": "Fix the app startup hang where ChatView displays an infinite 'Loading your profile...' spinner and never transitions to the main UI. The profile loading state must resolve within a reasonable timeout (e.g., 10 seconds) regardless of whether the backend returns a profile, returns null, or errors. If the backend call fails or returns no profile, ChatView must exit the loading state and either show the DisplayNamePrompt/ProfileSetupModal for new users or render the main UI for returning users — the spinner must never block the UI indefinitely.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-1"
         ],
         "quotes": [
-          "There's no message thing video call or friends option"
+          "It's been like this for 10 minutes"
         ]
       },
       "acceptanceCriteria": [
-        "Opening the app shows the public chat message feed with past messages and a text input + send button at the bottom.",
-        "The Friends panel is visible as a sidebar or accessible toggle, showing the user search field, friend requests, and friend list.",
-        "Each friend list item and the private chat header display a video call button that opens the VideoCallModal.",
-        "The VideoCallModal opens correctly and shows the local camera feed with mute, camera toggle, and end-call controls.",
-        "Navigating between public chat, private chat, and the friends panel does not cause any section to disappear.",
-        "No console errors or blank screens occur on initial load."
+        "The 'Loading your profile...' spinner is never displayed for more than 10 seconds under any network or backend condition.",
+        "If the backend getUserProfile call resolves with a null/empty result, ChatView exits the loading state and shows the profile setup flow (DisplayNamePrompt or ProfileSetupModal).",
+        "If the backend getUserProfile call resolves with a valid profile, ChatView exits the loading state and renders the full main UI (message feed, friends sidebar, navigation).",
+        "If the backend getUserProfile call errors or times out, ChatView exits the loading state gracefully and shows an appropriate fallback (setup flow or an error message), not a permanent spinner.",
+        "On subsequent visits where a profile already exists, the app loads past the spinner quickly and renders the main chat UI without requiring any user action.",
+        "No unhandled promise rejections or console errors occur during the profile loading lifecycle."
       ]
     },
     {
-      "id": "REQ-18",
-      "text": "Audit and fix the ChatView component's conditional rendering logic and state management. Ensure that the authentication/profile gate (DisplayNamePrompt or ProfileSetupModal) does not prevent the main UI from rendering after profile setup is complete. After a user has a profile, ChatView must render all primary UI sections unconditionally: the message feed area, the friends sidebar, and any active private chat or video call modal overlay.",
+      "id": "REQ-20",
+      "text": "Audit the useQueries.ts getUserProfile hook and the ChatView loading gate logic to identify why the loading state never resolves. Common causes to check and fix: (1) the React Query query never transitions out of 'loading' status because the actor is not yet initialised when the query fires; (2) the query is dependent on an actor ref that stays null, causing it to remain in a pending/loading state forever; (3) ChatView checks a loading flag that is never set to false when the query result is null or undefined. Ensure the query has a proper enabled condition, a sensible staleTime/retry policy, and that ChatView's loading gate correctly handles all terminal query states (success with data, success with null, and error).",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "There's no message thing video call or friends option"
+          "msg-1"
         ]
       },
       "acceptanceCriteria": [
-        "A returning user with an existing profile sees the full chat UI immediately on load without being re-prompted.",
-        "A new user completes the display name / profile setup flow and is then shown the full chat UI.",
-        "The friends panel renders alongside the message feed — neither replaces the other unless the layout calls for a single-column view.",
-        "The video call button is rendered in both FriendListItem rows (inside the Friends panel) and the PrivateChatView header.",
-        "All three UI sections (message feed, friends panel, video call controls) pass a visual smoke-test with no hidden or zero-height containers."
+        "The getUserProfile React Query hook has an 'enabled' condition that prevents it from firing before the actor is ready, and correctly transitions to a non-loading state once the actor resolves.",
+        "ChatView's loading gate (the condition that shows the spinner) evaluates to false as soon as the profile query reaches any terminal state (success or error), not just when data is truthy.",
+        "If the actor initialisation itself hangs, a timeout or fallback mechanism ensures the UI is never permanently blocked."
       ]
     }
   ],
   "constraints": [
-    "Do not modify any files listed under frontend.immutablePaths.",
-    "All Motoko logic must remain in backend/main.mo; do not create additional actors.",
-    "Preserve all existing backend data structures and public API functions."
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "Do not change the backend Motoko actor interface or data schema."
   ],
   "nonGoals": [
-    "Adding new features beyond restoring the existing UI sections.",
-    "Changing the warm coral/amber visual theme.",
-    "Implementing true peer-to-peer WebRTC; the simulated video call UI is sufficient.",
-    "Modifying the backend actor."
+    "Adding new chat or friends features.",
+    "Changing the visual theme or layout once the loading issue is resolved.",
+    "Modifying the video call feature."
   ],
   "imageRequirements": {
     "required": [],
