@@ -1,79 +1,62 @@
 import React from 'react';
-import { Principal } from '@dfinity/principal';
+import { FriendRequest, UserProfile } from '../backend';
 import { useAcceptFriendRequest, useDeclineFriendRequest } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Check, X } from 'lucide-react';
-import type { UserProfile, FriendRequest } from '../backend';
+import { Check, X, Loader2 } from 'lucide-react';
 
 interface FriendRequestItemProps {
   request: FriendRequest;
-  profile: UserProfile;
-  onVideoCall?: (principal: Principal) => void;
+  requesterProfile: UserProfile;
+  currentUserProfile: UserProfile;
 }
 
-export default function FriendRequestItem({ request, profile }: FriendRequestItemProps) {
-  const acceptMutation = useAcceptFriendRequest();
-  const declineMutation = useDeclineFriendRequest();
+export default function FriendRequestItem({
+  request,
+  requesterProfile,
+}: FriendRequestItemProps) {
+  const acceptRequest = useAcceptFriendRequest();
+  const declineRequest = useDeclineFriendRequest();
 
-  const handleAccept = async () => {
-    try {
-      await acceptMutation.mutateAsync(request.from);
-    } catch (error) {
-      console.error('Failed to accept friend request:', error);
-    }
-  };
-
-  const handleDecline = async () => {
-    try {
-      await declineMutation.mutateAsync(request.from);
-    } catch (error) {
-      console.error('Failed to decline friend request:', error);
-    }
-  };
-
-  const initials = profile.displayName.slice(0, 2).toUpperCase();
-  const isPending = acceptMutation.isPending || declineMutation.isPending;
+  const initials = requesterProfile.displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50">
-      <div className="flex items-center gap-2 min-w-0">
-        <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-xs font-bold text-amber-600 flex-shrink-0">
-          {initials}
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{profile.displayName}</p>
-          <p className="text-xs text-muted-foreground truncate">@{profile.username}</p>
-        </div>
+    <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+      {/* Avatar */}
+      <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+        {initials}
       </div>
-      <div className="flex items-center gap-1 flex-shrink-0">
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={handleAccept}
-          disabled={isPending}
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">{requesterProfile.displayName}</p>
+        <p className="text-xs text-muted-foreground truncate">@{requesterProfile.username}</p>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <button
+          onClick={() => acceptRequest.mutate(request.from)}
+          disabled={acceptRequest.isPending || declineRequest.isPending}
+          className="w-8 h-8 flex items-center justify-center bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
           title="Accept"
-          className="w-7 h-7 text-green-600 hover:text-green-700 hover:bg-green-50"
         >
-          {acceptMutation.isPending ? (
-            <span className="w-3 h-3 border-2 border-green-600 border-t-transparent rounded-full animate-spin" />
+          {acceptRequest.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <Check className="w-4 h-4" />
+            <Check className="w-3.5 h-3.5" />
           )}
-        </Button>
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={handleDecline}
-          disabled={isPending}
+        </button>
+        <button
+          onClick={() => declineRequest.mutate(request.from)}
+          disabled={acceptRequest.isPending || declineRequest.isPending}
+          className="w-8 h-8 flex items-center justify-center bg-muted text-muted-foreground rounded-full hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
           title="Decline"
-          className="w-7 h-7 text-destructive hover:text-destructive hover:bg-destructive/10"
         >
-          {declineMutation.isPending ? (
-            <span className="w-3 h-3 border-2 border-destructive border-t-transparent rounded-full animate-spin" />
+          {declineRequest.isPending ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           )}
-        </Button>
+        </button>
       </div>
     </div>
   );

@@ -1,259 +1,328 @@
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { useInternetIdentity } from '../hooks/useInternetIdentity';
 import { useQueryClient } from '@tanstack/react-query';
-import { Principal } from '@dfinity/principal';
+import { useGetCallerUserProfile } from '../hooks/useQueries';
+import { useVideoCall } from '../hooks/useVideoCall';
 import MessageFeed from './MessageFeed';
 import MessageInput from './MessageInput';
 import FriendsPanel from './FriendsPanel';
 import PrivateChatView from './PrivateChatView';
-import ProfileSetupModal from './ProfileSetupModal';
 import VideoCallModal from './VideoCallModal';
-import { useVideoCall } from '../hooks/useVideoCall';
-import { useGetCallerUserProfile, useUpdateOnlineStatus } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Users, MessageCircle, LogOut, LogIn } from 'lucide-react';
+import DisplayNamePrompt from './DisplayNamePrompt';
+import { UserProfile } from '../backend';
+import { MessageSquare, Users, LogOut, Video, Menu, X } from 'lucide-react';
 
 export default function ChatView() {
-  const { identity, login, clear, loginStatus } = useInternetIdentity();
+  const { identity, clear, login, loginStatus } = useInternetIdentity();
   const queryClient = useQueryClient();
   const isAuthenticated = !!identity;
 
-  const [showFriends, setShowFriends] = useState(false);
-  const [selectedFriend, setSelectedFriend] = useState<Principal | null>(null);
-  const [callFriend, setCallFriend] = useState<Principal | null>(null);
+  const { data: userProfile, isLoading: profileLoading, isFetched } = useGetCallerUserProfile();
+
+  const [selectedFriend, setSelectedFriend] = useState<UserProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<'chat' | 'friends'>('chat');
+  const [showFriendsSidebar, setShowFriendsSidebar] = useState(true);
+  const [isVideoCallActive, setIsVideoCallActive] = useState(false);
+  const [videoCallFriend, setVideoCallFriend] = useState<UserProfile | null>(null);
+
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
 
   const {
-    data: userProfile,
-    isLoading: profileLoading,
-    isFetched,
-  } = useGetCallerUserProfile();
-
-  const updateOnlineStatus = useUpdateOnlineStatus();
-
-  const {
-    callStatus,
+    localVideoRef,
+    remoteAudioRef: hookRemoteAudioRef,
     isMuted,
     isCameraOff,
-    mediaError,
     startCall,
     endCall,
     toggleMute,
     toggleCamera,
-    localVideoRef,
-    remoteAudioRef,
   } = useVideoCall();
 
-  // Update online status on mount/unmount
-  useEffect(() => {
-    if (isAuthenticated && userProfile) {
-      updateOnlineStatus.mutate(true);
-    }
-    return () => {
-      if (isAuthenticated && userProfile) {
-        updateOnlineStatus.mutate(false);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, !!userProfile]);
+  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
+
+  const handleStartVideoCall = (friend: UserProfile) => {
+    setVideoCallFriend(friend);
+    setIsVideoCallActive(true);
+    startCall();
+  };
+
+  const handleEndCall = () => {
+    endCall();
+    setIsVideoCallActive(false);
+    setVideoCallFriend(null);
+  };
 
   const handleLogout = async () => {
-    if (userProfile) {
-      try {
-        await updateOnlineStatus.mutateAsync(false);
-      } catch {
-        // ignore
-      }
-    }
     await clear();
     queryClient.clear();
     setSelectedFriend(null);
-    setShowFriends(false);
   };
 
   const handleLogin = async () => {
     try {
       await login();
-    } catch (error: unknown) {
-      const err = error as Error;
-      if (err?.message === 'User is already authenticated') {
+    } catch (error: any) {
+      if (error.message === 'User is already authenticated') {
         await clear();
         setTimeout(() => login(), 300);
       }
     }
   };
 
-  const handleSelectFriend = (principal: Principal) => {
-    setSelectedFriend(principal);
-    setShowFriends(false);
-  };
+  // Not authenticated: show login screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        {/* Header */}
+        <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center gap-3 shadow-md">
+          <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Logo" className="w-9 h-9 rounded-full" />
+          <h1 className="text-xl font-bold tracking-tight">Friends Chat</h1>
+        </header>
 
-  const handleStartCall = (friendPrincipal: Principal) => {
-    // Set the friend first so the modal mounts and the video/audio elements are
-    // created, then start the call so the stream can be attached after mount.
-    setCallFriend(friendPrincipal);
-    setTimeout(() => {
-      startCall();
-    }, 0);
-  };
+        {/* Login hero */}
+        <main className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md w-full text-center space-y-8">
+            <div className="space-y-3">
+              <img
+                src="/assets/generated/friends-chat-icon.dim_512x512.png"
+                alt="Friends Chat"
+                className="w-24 h-24 mx-auto rounded-2xl shadow-lg"
+              />
+              <h2 className="text-3xl font-bold text-foreground">Stay Connected</h2>
+              <p className="text-muted-foreground text-lg">
+                Chat with friends, send messages, and video call — all in one place.
+              </p>
+            </div>
 
-  const handleEndCall = () => {
-    endCall();
-    setCallFriend(null);
-  };
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+                <MessageSquare className="w-6 h-6 text-primary mx-auto mb-2" />
+                <p className="text-sm font-medium text-foreground">Public Chat</p>
+              </div>
+              <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+                <Users className="w-6 h-6 text-primary mx-auto mb-2" />
+                <p className="text-sm font-medium text-foreground">Friends</p>
+              </div>
+              <div className="bg-card rounded-xl p-4 shadow-sm border border-border">
+                <Video className="w-6 h-6 text-primary mx-auto mb-2" />
+                <p className="text-sm font-medium text-foreground">Video Calls</p>
+              </div>
+            </div>
 
-  // Prevent flash of profile setup modal
-  const showProfileSetup = isAuthenticated && !profileLoading && isFetched && userProfile === null;
-
-  return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 bg-card border-b border-border shadow-sm">
-        <div className="flex items-center gap-3">
-          <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Friends Chat" className="w-8 h-8 rounded-lg" />
-          <h1 className="text-xl font-bold text-primary">Friends Chat</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          {isAuthenticated && userProfile && (
-            <>
-              <span className="text-sm text-muted-foreground hidden sm:block">
-                {userProfile.displayName}
-              </span>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  setShowFriends(v => !v);
-                  setSelectedFriend(null);
-                }}
-                title="Friends"
-              >
-                <Users className="w-5 h-5" />
-              </Button>
-            </>
-          )}
-          {isAuthenticated ? (
-            <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
-              <LogOut className="w-5 h-5" />
-            </Button>
-          ) : (
-            <Button
-              variant="default"
-              size="sm"
+            <button
               onClick={handleLogin}
               disabled={loginStatus === 'logging-in'}
+              className="w-full bg-primary text-primary-foreground py-3 px-6 rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity disabled:opacity-50 shadow-md"
             >
-              {loginStatus === 'logging-in' ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Logging in…
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <LogIn className="w-4 h-4" />
-                  Login
-                </span>
-              )}
-            </Button>
+              {loginStatus === 'logging-in' ? 'Logging in…' : 'Login to Get Started'}
+            </button>
+          </div>
+        </main>
+
+        <footer className="text-center py-4 text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Friends Chat · Built with ❤️ using{' '}
+          <a
+            href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'friends-chat')}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-primary"
+          >
+            caffeine.ai
+          </a>
+        </footer>
+      </div>
+    );
+  }
+
+  // Loading profile
+  if (profileLoading || !isFetched) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+          <p className="text-muted-foreground">Loading your profile…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Profile setup for new users
+  if (showProfileSetup) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <header className="bg-primary text-primary-foreground px-6 py-4 flex items-center gap-3 shadow-md">
+          <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Logo" className="w-9 h-9 rounded-full" />
+          <h1 className="text-xl font-bold tracking-tight">Friends Chat</h1>
+        </header>
+        <main className="flex-1 flex items-center justify-center p-6">
+          <DisplayNamePrompt onComplete={() => queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] })} />
+        </main>
+      </div>
+    );
+  }
+
+  // Main authenticated UI
+  return (
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Top Header */}
+      <header className="bg-primary text-primary-foreground px-4 py-3 flex items-center gap-3 shadow-md flex-shrink-0 z-10">
+        <img src="/assets/generated/chat-logo.dim_256x256.png" alt="Logo" className="w-8 h-8 rounded-full" />
+        <h1 className="text-lg font-bold tracking-tight flex-1">Friends Chat</h1>
+
+        {/* Mobile tab switcher */}
+        <div className="flex md:hidden items-center gap-1 bg-primary-foreground/10 rounded-lg p-1">
+          <button
+            onClick={() => setActiveTab('chat')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'chat'
+                ? 'bg-primary-foreground text-primary'
+                : 'text-primary-foreground/80 hover:text-primary-foreground'
+            }`}
+          >
+            <MessageSquare className="w-4 h-4" />
+            Chat
+          </button>
+          <button
+            onClick={() => setActiveTab('friends')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              activeTab === 'friends'
+                ? 'bg-primary-foreground text-primary'
+                : 'text-primary-foreground/80 hover:text-primary-foreground'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            Friends
+          </button>
+        </div>
+
+        {/* Desktop sidebar toggle */}
+        <button
+          onClick={() => setShowFriendsSidebar(!showFriendsSidebar)}
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 text-sm font-medium transition-colors"
+          title={showFriendsSidebar ? 'Hide Friends' : 'Show Friends'}
+        >
+          <Users className="w-4 h-4" />
+          <span className="hidden lg:inline">Friends</span>
+        </button>
+
+        {/* User info + logout */}
+        <div className="flex items-center gap-2">
+          {userProfile && (
+            <div className="hidden sm:flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xs font-bold">
+                {userProfile.displayName.charAt(0).toUpperCase()}
+              </div>
+              <span className="text-sm font-medium hidden lg:inline">{userProfile.displayName}</span>
+            </div>
           )}
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-lg hover:bg-primary-foreground/20 transition-colors"
+            title="Logout"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </header>
 
-      {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Friends panel */}
-        {showFriends && isAuthenticated && userProfile && (
-          <aside className="w-72 border-r border-border bg-card flex-shrink-0 overflow-hidden flex flex-col">
+      {/* Main content area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* ── FRIENDS SIDEBAR (desktop: always visible when toggled; mobile: tab) ── */}
+        <aside
+          className={`
+            flex-shrink-0 border-r border-border bg-card overflow-hidden transition-all duration-200
+            ${/* Desktop */ ''}
+            hidden md:flex md:flex-col
+            ${showFriendsSidebar ? 'md:w-72 lg:w-80' : 'md:w-0'}
+          `}
+        >
+          {showFriendsSidebar && (
             <FriendsPanel
-              onSelectFriend={handleSelectFriend}
-              onVideoCall={handleStartCall}
+              currentUserProfile={userProfile!}
+              onSelectFriend={(friend) => {
+                setSelectedFriend(friend);
+                setActiveTab('chat');
+              }}
+              selectedFriend={selectedFriend}
+              onStartVideoCall={handleStartVideoCall}
             />
-          </aside>
-        )}
+          )}
+        </aside>
 
-        {/* Chat area */}
-        <main className="flex-1 flex flex-col overflow-hidden">
-          {selectedFriend && isAuthenticated && userProfile ? (
+        {/* Mobile Friends Tab */}
+        <div
+          className={`
+            md:hidden flex-1 flex flex-col overflow-hidden
+            ${activeTab === 'friends' ? 'flex' : 'hidden'}
+          `}
+        >
+          <FriendsPanel
+            currentUserProfile={userProfile!}
+            onSelectFriend={(friend) => {
+              setSelectedFriend(friend);
+              setActiveTab('chat');
+            }}
+            selectedFriend={selectedFriend}
+            onStartVideoCall={handleStartVideoCall}
+          />
+        </div>
+
+        {/* ── MAIN CHAT AREA ── */}
+        <main
+          className={`
+            flex-1 flex flex-col overflow-hidden
+            ${activeTab === 'chat' ? 'flex' : 'hidden md:flex'}
+          `}
+        >
+          {selectedFriend ? (
+            /* Private Chat */
             <PrivateChatView
-              friendPrincipal={selectedFriend}
-              currentUserProfile={userProfile}
+              friend={selectedFriend}
+              currentUserProfile={userProfile!}
               onBack={() => setSelectedFriend(null)}
-              onVideoCall={handleStartCall}
+              onStartVideoCall={() => handleStartVideoCall(selectedFriend)}
             />
           ) : (
-            <>
-              {/* Public chat */}
-              {!isAuthenticated && (
-                <div className="flex-1 flex items-center justify-center p-8">
-                  <div className="text-center max-w-sm">
-                    <img
-                      src="/assets/generated/friends-chat-icon.dim_512x512.png"
-                      alt="Friends Chat"
-                      className="w-24 h-24 mx-auto mb-4 rounded-2xl shadow-lg"
-                    />
-                    <h2 className="text-2xl font-bold text-foreground mb-2">Welcome to Friends Chat</h2>
-                    <p className="text-muted-foreground mb-6">
-                      Login to chat with friends, send private messages, and make video calls.
-                    </p>
-                    <Button onClick={handleLogin} disabled={loginStatus === 'logging-in'} size="lg">
-                      {loginStatus === 'logging-in' ? 'Logging in…' : 'Login to get started'}
-                    </Button>
-                  </div>
+            /* Public Chat */
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Public chat header */}
+              <div className="px-4 py-3 border-b border-border bg-card flex items-center gap-3 flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-primary" />
                 </div>
-              )}
-              {isAuthenticated && (
-                <div className="flex-1 flex flex-col overflow-hidden">
-                  <div className="px-4 py-2 border-b border-border bg-card/50 flex items-center gap-2">
-                    <MessageCircle className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-foreground">Public Chat</span>
-                  </div>
-                  <MessageFeed currentUserDisplayName={userProfile?.displayName} />
-                  {userProfile && (
-                    <MessageInput senderDisplayName={userProfile.displayName} />
-                  )}
+                <div>
+                  <h2 className="font-semibold text-foreground text-sm">Public Chat</h2>
+                  <p className="text-xs text-muted-foreground">Everyone can see these messages</p>
                 </div>
-              )}
-            </>
+              </div>
+
+              {/* Message feed */}
+              <div className="flex-1 overflow-hidden flex flex-col min-h-0">
+                <MessageFeed currentUserProfile={userProfile!} />
+              </div>
+
+              {/* Message input */}
+              <div className="flex-shrink-0 border-t border-border bg-card">
+                <MessageInput currentUserProfile={userProfile!} />
+              </div>
+            </div>
           )}
         </main>
       </div>
 
-      {/* Profile setup modal */}
-      {showProfileSetup && (
-        <ProfileSetupModal onComplete={() => {
-          queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
-        }} />
-      )}
-
-      {/* Video call modal — render as soon as callFriend is set so the video/audio
-          elements mount before the stream is attached */}
-      {callFriend && (
+      {/* Video Call Modal */}
+      {isVideoCallActive && videoCallFriend && (
         <VideoCallModal
-          friendPrincipal={callFriend}
-          callStatus={callStatus}
+          friend={videoCallFriend}
+          localVideoRef={localVideoRef}
+          remoteAudioRef={hookRemoteAudioRef}
           isMuted={isMuted}
           isCameraOff={isCameraOff}
-          mediaError={mediaError}
           onToggleMute={toggleMute}
           onToggleCamera={toggleCamera}
           onEndCall={handleEndCall}
-          localVideoRef={localVideoRef}
-          remoteAudioRef={remoteAudioRef}
         />
       )}
-
-      {/* Footer */}
-      <footer className="py-2 px-4 text-center text-xs text-muted-foreground border-t border-border bg-card">
-        © {new Date().getFullYear()} Friends Chat &mdash; Built with{' '}
-        <span className="text-primary">♥</span> using{' '}
-        <a
-          href={`https://caffeine.ai/?utm_source=Caffeine-footer&utm_medium=referral&utm_content=${encodeURIComponent(window.location.hostname || 'friends-chat')}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-primary"
-        >
-          caffeine.ai
-        </a>
-      </footer>
     </div>
   );
 }

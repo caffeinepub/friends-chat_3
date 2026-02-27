@@ -1,62 +1,72 @@
 import React from 'react';
-import { Principal } from '@dfinity/principal';
+import { UserProfile } from '../backend';
 import { Video } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import type { UserProfile } from '../backend';
 
 interface FriendListItemProps {
-  profile: UserProfile;
+  friend: UserProfile;
+  isSelected: boolean;
   onClick: () => void;
-  onVideoCall?: () => void;
+  onStartVideoCall: () => void;
 }
 
-function isOnline(profile: UserProfile): boolean {
-  if (profile.isOnline) return true;
-  // Consider online if lastOnline within last 5 minutes
+function isRecentlyOnline(lastOnline: bigint): boolean {
   const fiveMinutesAgo = BigInt(Date.now() - 5 * 60 * 1000) * BigInt(1_000_000);
-  return profile.lastOnline > fiveMinutesAgo;
+  return lastOnline > fiveMinutesAgo;
 }
 
-export default function FriendListItem({ profile, onClick, onVideoCall }: FriendListItemProps) {
-  const online = isOnline(profile);
-  const initials = profile.displayName.slice(0, 2).toUpperCase();
+export default function FriendListItem({
+  friend,
+  isSelected,
+  onClick,
+  onStartVideoCall,
+}: FriendListItemProps) {
+  const online = friend.isOnline || isRecentlyOnline(friend.lastOnline);
+  const initials = friend.displayName.charAt(0).toUpperCase();
 
   return (
     <div
-      className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50 cursor-pointer group"
       onClick={onClick}
+      className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+        isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted/60 text-foreground'
+      }`}
     >
-      <div className="flex items-center gap-2 min-w-0">
-        {/* Avatar with online indicator */}
-        <div className="relative flex-shrink-0">
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-            {initials}
-          </div>
-          <span
-            className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-card ${
-              online ? 'bg-green-500' : 'bg-muted-foreground/40'
-            }`}
-          />
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm font-medium truncate">{profile.displayName}</p>
-          <p className="text-xs text-muted-foreground truncate">@{profile.username}</p>
-        </div>
-      </div>
-      {onVideoCall && (
-        <Button
-          size="icon"
-          variant="ghost"
-          onClick={e => {
-            e.stopPropagation();
-            onVideoCall();
-          }}
-          title="Video call"
-          className="w-7 h-7 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+      {/* Avatar with online indicator */}
+      <div className="relative flex-shrink-0">
+        <div
+          className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold ${
+            isSelected ? 'bg-primary text-primary-foreground' : 'bg-primary/10 text-primary'
+          }`}
         >
-          <Video className="w-4 h-4" />
-        </Button>
-      )}
+          {initials}
+        </div>
+        {online && (
+          <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-card rounded-full" />
+        )}
+      </div>
+
+      {/* Name + username */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{friend.displayName}</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {online ? 'Online' : '@' + friend.username}
+        </p>
+      </div>
+
+      {/* Video call button — always visible, not just on hover */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onStartVideoCall();
+        }}
+        className={`flex-shrink-0 p-1.5 rounded-lg transition-colors ${
+          isSelected
+            ? 'text-primary hover:bg-primary/20'
+            : 'text-muted-foreground hover:text-primary hover:bg-primary/10 opacity-0 group-hover:opacity-100'
+        }`}
+        title={`Video call ${friend.displayName}`}
+      >
+        <Video className="w-4 h-4" />
+      </button>
     </div>
   );
 }

@@ -1,212 +1,238 @@
-import React, { useState, useCallback } from 'react';
-import { Principal } from '@dfinity/principal';
+import React, { useState } from 'react';
+import { UserProfile, FriendRequest } from '../backend';
 import {
   useSearchUsers,
   useSendFriendRequest,
   usePendingFriendRequests,
   useFriendsProfiles,
+  useAcceptFriendRequest,
+  useDeclineFriendRequest,
   useGetUserProfile,
 } from '../hooks/useQueries';
 import FriendListItem from './FriendListItem';
 import FriendRequestItem from './FriendRequestItem';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { UserPlus, Search, Users, Bell } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import type { UserProfile, FriendRequest } from '../backend';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
+import { Search, UserPlus, Users, Bell, Loader2 } from 'lucide-react';
 
 interface FriendsPanelProps {
-  onSelectFriend: (principal: Principal) => void;
-  onVideoCall?: (principal: Principal) => void;
+  currentUserProfile: UserProfile;
+  onSelectFriend: (friend: UserProfile) => void;
+  selectedFriend: UserProfile | null;
+  onStartVideoCall: (friend: UserProfile) => void;
 }
 
-// Sub-component to render a single pending request with profile lookup
+// Sub-component: looks up a requester's profile then renders FriendRequestItem
 function PendingRequestRow({
   request,
-  onVideoCall,
+  currentUserProfile,
 }: {
   request: FriendRequest;
-  onVideoCall?: (principal: Principal) => void;
+  currentUserProfile: UserProfile;
 }) {
-  const { data: profile, isLoading } = useGetUserProfile(request.from);
+  const { data: requesterProfile, isLoading } = useGetUserProfile(request.from);
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 p-2">
-        <Skeleton className="w-8 h-8 rounded-full" />
-        <Skeleton className="h-4 w-32" />
+      <div className="flex items-center gap-2 px-3 py-2">
+        <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+        <div className="flex-1 h-4 bg-muted rounded animate-pulse" />
       </div>
     );
   }
 
-  if (!profile) return null;
+  if (!requesterProfile) return null;
 
   return (
     <FriendRequestItem
       request={request}
-      profile={profile}
-      onVideoCall={onVideoCall}
+      requesterProfile={requesterProfile}
+      currentUserProfile={currentUserProfile}
     />
   );
 }
 
-export default function FriendsPanel({ onSelectFriend, onVideoCall }: FriendsPanelProps) {
+export default function FriendsPanel({
+  currentUserProfile,
+  onSelectFriend,
+  selectedFriend,
+  onStartVideoCall,
+}: FriendsPanelProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const { identity } = useInternetIdentity();
-  const currentPrincipal = identity?.getPrincipal().toString();
+  const [activeSection, setActiveSection] = useState<'friends' | 'requests' | 'search'>('friends');
 
-  const { data: searchResults, isLoading: searchLoading } = useSearchUsers(searchQuery);
-  const { data: pendingRequests, isLoading: requestsLoading } = usePendingFriendRequests();
-  const { data: friendsProfiles, isLoading: friendsLoading } = useFriendsProfiles();
+  const { data: searchResults = [], isLoading: isSearching } = useSearchUsers(
+    searchQuery.trim().length >= 1 ? searchQuery.trim() : ''
+  );
+  const { data: pendingRequests = [] } = usePendingFriendRequests();
+  const { data: friendsProfiles = [], isLoading: friendsLoading } = useFriendsProfiles();
   const sendFriendRequest = useSendFriendRequest();
 
-  const handleSendRequest = useCallback(
-    async (profile: UserProfile) => {
-      try {
-        await sendFriendRequest.mutateAsync(profile.principal);
-      } catch (error) {
-        console.error('Failed to send friend request:', error);
-      }
-    },
-    [sendFriendRequest]
+  const filteredSearch = searchResults.filter(
+    (u) => u.principal.toString() !== currentUserProfile.principal.toString()
   );
 
-  const filteredSearchResults = (searchResults ?? []).filter(
-    p => p.principal.toString() !== currentPrincipal
-  );
+  const isFriend = (profile: UserProfile) =>
+    currentUserProfile.friends.some((f) => f.toString() === profile.principal.toString());
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Search */}
-      <div className="p-3 border-b border-border">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search users…"
-            className="pl-8"
-          />
-        </div>
-      </div>
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Panel header */}
+      <div className="px-4 pt-4 pb-2 flex-shrink-0">
+        <h2 className="text-base font-bold text-foreground mb-3">Friends</h2>
 
-      <div className="flex-1 overflow-y-auto">
-        {/* Search results */}
-        {searchQuery.trim().length > 0 && (
-          <div className="p-2">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide px-2 mb-1">
-              Search Results
-            </p>
-            {searchLoading ? (
-              <div className="space-y-2 p-2">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <Skeleton className="w-8 h-8 rounded-full" />
-                    <Skeleton className="h-4 w-32" />
-                  </div>
-                ))}
-              </div>
-            ) : filteredSearchResults.length === 0 ? (
-              <p className="text-sm text-muted-foreground px-2 py-3">No users found.</p>
-            ) : (
-              <div className="space-y-1">
-                {filteredSearchResults.map(profile => (
-                  <div
-                    key={profile.principal.toString()}
-                    className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
-                        {profile.displayName.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{profile.displayName}</p>
-                        <p className="text-xs text-muted-foreground truncate">@{profile.username}</p>
-                      </div>
-                    </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={() => handleSendRequest(profile)}
-                      disabled={sendFriendRequest.isPending}
-                      title="Send friend request"
-                      className="flex-shrink-0"
-                    >
-                      {sendFriendRequest.isPending ? (
-                        <span className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <UserPlus className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+        {/* Search input */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search users…"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              if (e.target.value.trim()) setActiveSection('search');
+              else setActiveSection('friends');
+            }}
+            className="w-full pl-9 pr-3 py-2 text-sm bg-muted rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+          />
+          {isSearching && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
+          )}
+        </div>
+
+        {/* Section tabs */}
+        {!searchQuery.trim() && (
+          <div className="flex gap-1 mt-3">
+            <button
+              onClick={() => setActiveSection('friends')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeSection === 'friends'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              Friends
+              {friendsProfiles.length > 0 && (
+                <span className="ml-0.5 bg-primary-foreground/20 text-primary-foreground rounded-full px-1.5 py-0.5 text-xs leading-none">
+                  {friendsProfiles.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveSection('requests')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                activeSection === 'requests'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted'
+              }`}
+            >
+              <Bell className="w-3.5 h-3.5" />
+              Requests
+              {pendingRequests.length > 0 && (
+                <span className="ml-0.5 bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5 text-xs leading-none">
+                  {pendingRequests.length}
+                </span>
+              )}
+            </button>
           </div>
         )}
+      </div>
 
-        {/* Pending friend requests */}
-        {!searchQuery.trim() && (
-          <div className="p-2">
-            <div className="flex items-center gap-1 px-2 mb-1">
-              <Bell className="w-3 h-3 text-muted-foreground" />
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Requests {pendingRequests && pendingRequests.length > 0 ? `(${pendingRequests.length})` : ''}
-              </p>
-            </div>
-            {requestsLoading ? (
-              <div className="space-y-2 p-2">
-                <Skeleton className="h-12 w-full rounded-lg" />
-              </div>
-            ) : !pendingRequests || pendingRequests.length === 0 ? (
-              <p className="text-sm text-muted-foreground px-2 py-2">No pending requests.</p>
-            ) : (
-              <div className="space-y-1">
-                {pendingRequests.map(request => (
-                  <PendingRequestRow
-                    key={request.from.toString()}
-                    request={request}
-                    onVideoCall={onVideoCall}
-                  />
-                ))}
-              </div>
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-2 pb-4">
+        {/* Search results */}
+        {searchQuery.trim() && (
+          <div className="space-y-1 mt-1">
+            {filteredSearch.length === 0 && !isSearching && (
+              <p className="text-center text-sm text-muted-foreground py-6">No users found</p>
             )}
+            {filteredSearch.map((user) => {
+              const alreadyFriend = isFriend(user);
+              const isPending = sendFriendRequest.isPending;
+              return (
+                <div
+                  key={user.principal.toString()}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary flex-shrink-0">
+                    {user.displayName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{user.displayName}</p>
+                    <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+                  </div>
+                  {alreadyFriend ? (
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">Friend</span>
+                  ) : (
+                    <button
+                      onClick={() => sendFriendRequest.mutate(user.principal)}
+                      disabled={isPending}
+                      className="flex items-center gap-1 text-xs bg-primary text-primary-foreground px-2.5 py-1.5 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {isPending ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <UserPlus className="w-3 h-3" />
+                      )}
+                      Add
+                    </button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
         {/* Friends list */}
-        {!searchQuery.trim() && (
-          <div className="p-2">
-            <div className="flex items-center gap-1 px-2 mb-1">
-              <Users className="w-3 h-3 text-muted-foreground" />
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Friends {friendsProfiles && friendsProfiles.length > 0 ? `(${friendsProfiles.length})` : ''}
-              </p>
-            </div>
-            {friendsLoading ? (
-              <div className="space-y-2 p-2">
-                {[...Array(3)].map((_, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <Skeleton className="w-8 h-8 rounded-full" />
-                    <Skeleton className="h-4 w-32" />
+        {!searchQuery.trim() && activeSection === 'friends' && (
+          <div className="space-y-1 mt-1">
+            {friendsLoading && (
+              <div className="space-y-2 mt-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3 px-3 py-2">
+                    <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3.5 bg-muted rounded animate-pulse w-3/4" />
+                      <div className="h-3 bg-muted rounded animate-pulse w-1/2" />
+                    </div>
                   </div>
                 ))}
               </div>
-            ) : !friendsProfiles || friendsProfiles.length === 0 ? (
-              <p className="text-sm text-muted-foreground px-2 py-2">No friends yet. Search for users to add!</p>
-            ) : (
-              <div className="space-y-1">
-                {friendsProfiles.map(profile => (
-                  <FriendListItem
-                    key={profile.principal.toString()}
-                    profile={profile}
-                    onClick={() => onSelectFriend(profile.principal)}
-                    onVideoCall={onVideoCall ? () => onVideoCall(profile.principal) : undefined}
-                  />
-                ))}
+            )}
+            {!friendsLoading && friendsProfiles.length === 0 && (
+              <div className="text-center py-10 space-y-2">
+                <Users className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+                <p className="text-sm text-muted-foreground">No friends yet</p>
+                <p className="text-xs text-muted-foreground/70">Search for users above to add friends</p>
               </div>
             )}
+            {friendsProfiles.map((friend) => (
+              <FriendListItem
+                key={friend.principal.toString()}
+                friend={friend}
+                isSelected={selectedFriend?.principal.toString() === friend.principal.toString()}
+                onClick={() => onSelectFriend(friend)}
+                onStartVideoCall={() => onStartVideoCall(friend)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Pending requests */}
+        {!searchQuery.trim() && activeSection === 'requests' && (
+          <div className="space-y-1 mt-1">
+            {pendingRequests.length === 0 && (
+              <div className="text-center py-10 space-y-2">
+                <Bell className="w-10 h-10 text-muted-foreground/40 mx-auto" />
+                <p className="text-sm text-muted-foreground">No pending requests</p>
+              </div>
+            )}
+            {pendingRequests.map((req) => (
+              <PendingRequestRow
+                key={req.from.toString()}
+                request={req}
+                currentUserProfile={currentUserProfile}
+              />
+            ))}
           </div>
         )}
       </div>

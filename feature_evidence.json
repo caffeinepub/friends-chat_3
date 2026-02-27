@@ -2,11 +2,16 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-fix-the-video-call-feature-so-that-the-remote-party-s-audio-is-audible-during-a-call-the-videocallmodal-must-correctly-attach-the-remote-media-stream-including-audio-tracks-to-the-remote-video-audio-element-so-the-local-user-can-hear-the-other-person-ensure-the-audio-element-or-video-element-used-for-remote-playback-has-its-srcobject-set-to-the-remote-stream-is-not-muted-and-that-autoplay-is-set-also-verify-that-getusermedia-requests-audio-true-so-the-local-microphone-track-is-captured-and-available-for-the-simulated-remote-audio-path",
-      "featureTitle": "Fix the video call feature so that the remote party's audio is audible during a call. The VideoCallModal must correctly attach the remote media stream (including audio tracks) to the remote video/audio element so the local user can hear the other person. Ensure the audio element or video element used for remote playback has its srcObject set to the remote stream, is not muted, and that autoPlay is set. Also verify that getUserMedia requests audio: true so the local microphone track is captured and available for the simulated remote audio path.",
+      "featureId": "feature-restore-the-main-application-layout-in-chatview-so-that-the-public-message-feed-messagefeed-messageinput-the-friends-panel-friendspanel-and-the-video-call-button-modal-videocallmodal-are-all-visible-and-accessible-the-root-app-renders-chatview-and-chatview-must-correctly-mount-and-display-all-three-sections-the-chat-area-with-the-scrollable-message-feed-and-input-bar-the-friends-sidebar-panel-and-the-video-call-modal-trigger-without-any-section-being-hidden-unmounted-or-missing-from-the-dom",
+      "featureTitle": "Restore the main application layout in ChatView so that the public message feed (MessageFeed + MessageInput), the Friends panel (FriendsPanel), and the video call button/modal (VideoCallModal) are all visible and accessible. The root App renders ChatView, and ChatView must correctly mount and display all three sections — the chat area with the scrollable message feed and input bar, the friends sidebar panel, and the video call modal trigger — without any section being hidden, unmounted, or missing from the DOM.",
       "files": [
-        "frontend/src/components/VideoCallModal.tsx",
-        "frontend/src/hooks/useVideoCall.ts"
+        "frontend/src/components/ChatView.tsx",
+        "frontend/src/components/FriendListItem.tsx",
+        "frontend/src/components/FriendsPanel.tsx",
+        "frontend/src/components/MessageFeed.tsx",
+        "frontend/src/components/MessageInput.tsx",
+        "frontend/src/components/PrivateChatView.tsx",
+        "frontend/src/components/VideoCallModal.tsx"
       ],
       "components": [
         "core-infrastructure@1.0.2",
@@ -18,7 +23,29 @@
         "camera@1.0.0"
       ],
       "testIds": [
-        "REQ-16"
+        "REQ-17"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-audit-and-fix-the-chatview-component-s-conditional-rendering-logic-and-state-management-ensure-that-the-authentication-profile-gate-displaynameprompt-or-profilesetupmodal-does-not-prevent-the-main-ui-from-rendering-after-profile-setup-is-complete-after-a-user-has-a-profile-chatview-must-render-all-primary-ui-sections-unconditionally-the-message-feed-area-the-friends-sidebar-and-any-active-private-chat-or-video-call-modal-overlay",
+      "featureTitle": "Audit and fix the ChatView component's conditional rendering logic and state management. Ensure that the authentication/profile gate (DisplayNamePrompt or ProfileSetupModal) does not prevent the main UI from rendering after profile setup is complete. After a user has a profile, ChatView must render all primary UI sections unconditionally: the message feed area, the friends sidebar, and any active private chat or video call modal overlay.",
+      "files": [
+        "frontend/src/components/ChatView.tsx",
+        "frontend/src/components/DisplayNamePrompt.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-18"
       ],
       "confidence": "high"
     }

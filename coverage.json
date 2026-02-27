@@ -1,26 +1,52 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T03:02:28.969Z",
+  "generatedAt": "2026-02-27T03:12:20.266Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 1,
-    "implemented": 1,
+    "total": 2,
+    "implemented": 2,
     "items": [
       {
-        "id": "REQ-16",
-        "summary": "Fix the video call feature so that the remote party's audio is audible during a call. The VideoCallModal must correctly attach the remote media stream (including audio tracks) to the remote video/audio element so the local user can hear the other person. Ensure the audio element or video element used for remote playback has its srcObject set to the remote stream, is not muted, and that autoPlay is set. Also verify that getUserMedia requests audio: true so the local microphone track is captured and available for the simulated remote audio path.",
+        "id": "REQ-17",
+        "summary": "Restore the main application layout in ChatView so that the public message feed (MessageFeed + MessageInput), the Friends panel (FriendsPanel), and the video call button/modal (VideoCallModal) are all visible and accessible. The root App renders ChatView, and ChatView must correctly mount and display all three sections — the chat area with the scrollable message feed and input bar, the friends sidebar panel, and the video call modal trigger — without any section being hidden, unmounted, or missing from the DOM.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/hooks/useVideoCall.ts",
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/MessageFeed.tsx",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/components/FriendListItem.tsx",
+          "frontend/src/components/PrivateChatView.tsx",
           "frontend/src/components/VideoCallModal.tsx"
         ],
         "matchedFiles": [
-          "frontend/src/hooks/useVideoCall.ts",
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/MessageFeed.tsx",
+          "frontend/src/components/MessageInput.tsx",
+          "frontend/src/components/FriendListItem.tsx",
+          "frontend/src/components/PrivateChatView.tsx",
           "frontend/src/components/VideoCallModal.tsx"
+        ]
+      },
+      {
+        "id": "REQ-18",
+        "summary": "Audit and fix the ChatView component's conditional rendering logic and state management. Ensure that the authentication/profile gate (DisplayNamePrompt or ProfileSetupModal) does not prevent the main UI from rendering after profile setup is complete. After a user has a profile, ChatView must render all primary UI sections unconditionally: the message feed area, the friends sidebar, and any active private chat or video call modal overlay.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/components/DisplayNamePrompt.tsx",
+          "frontend/src/components/ProfileSetupModal.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/components/DisplayNamePrompt.tsx",
+          "frontend/src/hooks/useQueries.ts"
         ]
       }
     ]
@@ -31,8 +57,15 @@
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
     "frontend/src/components/ChatView.tsx",
+    "frontend/src/components/DisplayNamePrompt.tsx",
+    "frontend/src/components/FriendListItem.tsx",
+    "frontend/src/components/FriendRequestItem.tsx",
+    "frontend/src/components/FriendsPanel.tsx",
+    "frontend/src/components/MessageFeed.tsx",
+    "frontend/src/components/MessageInput.tsx",
+    "frontend/src/components/PrivateChatView.tsx",
     "frontend/src/components/VideoCallModal.tsx",
-    "frontend/src/hooks/useVideoCall.ts",
+    "frontend/src/hooks/useQueries.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

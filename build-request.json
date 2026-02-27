@@ -1,38 +1,61 @@
 {
   "kind": "build_request",
-  "title": "Fix remote audio not audible during video calls",
+  "title": "Restore missing Messages, Friends panel, and Video Call UI",
   "projectName": "Friends Chat",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-16",
-      "text": "Fix the video call feature so that the remote party's audio is audible during a call. The VideoCallModal must correctly attach the remote media stream (including audio tracks) to the remote video/audio element so the local user can hear the other person. Ensure the audio element or video element used for remote playback has its srcObject set to the remote stream, is not muted, and that autoPlay is set. Also verify that getUserMedia requests audio: true so the local microphone track is captured and available for the simulated remote audio path.",
+      "id": "REQ-17",
+      "text": "Restore the main application layout in ChatView so that the public message feed (MessageFeed + MessageInput), the Friends panel (FriendsPanel), and the video call button/modal (VideoCallModal) are all visible and accessible. The root App renders ChatView, and ChatView must correctly mount and display all three sections — the chat area with the scrollable message feed and input bar, the friends sidebar panel, and the video call modal trigger — without any section being hidden, unmounted, or missing from the DOM.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "I can't hear the other person's on the call"
+          "There's no message thing video call or friends option"
         ]
       },
       "acceptanceCriteria": [
-        "The VideoCallModal renders a dedicated audio or video element for the remote stream that has its srcObject set and is not muted.",
-        "getUserMedia in useVideoCall.ts requests both audio and video (audio: true, video: true).",
-        "The remote audio element has autoPlay set to true so playback begins without user interaction.",
-        "No console errors related to audio playback or media streams occur during the call lifecycle.",
-        "Ending the call stops all media tracks and removes the srcObject from the remote audio/video element."
+        "Opening the app shows the public chat message feed with past messages and a text input + send button at the bottom.",
+        "The Friends panel is visible as a sidebar or accessible toggle, showing the user search field, friend requests, and friend list.",
+        "Each friend list item and the private chat header display a video call button that opens the VideoCallModal.",
+        "The VideoCallModal opens correctly and shows the local camera feed with mute, camera toggle, and end-call controls.",
+        "Navigating between public chat, private chat, and the friends panel does not cause any section to disappear.",
+        "No console errors or blank screens occur on initial load."
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "text": "Audit and fix the ChatView component's conditional rendering logic and state management. Ensure that the authentication/profile gate (DisplayNamePrompt or ProfileSetupModal) does not prevent the main UI from rendering after profile setup is complete. After a user has a profile, ChatView must render all primary UI sections unconditionally: the message feed area, the friends sidebar, and any active private chat or video call modal overlay.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "There's no message thing video call or friends option"
+        ]
+      },
+      "acceptanceCriteria": [
+        "A returning user with an existing profile sees the full chat UI immediately on load without being re-prompted.",
+        "A new user completes the display name / profile setup flow and is then shown the full chat UI.",
+        "The friends panel renders alongside the message feed — neither replaces the other unless the layout calls for a single-column view.",
+        "The video call button is rendered in both FriendListItem rows (inside the Friends panel) and the PrivateChatView header.",
+        "All three UI sections (message feed, friends panel, video call controls) pass a visual smoke-test with no hidden or zero-height containers."
       ]
     }
   ],
   "constraints": [
-    "Do not alter immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
-    "Since true peer-to-peer WebRTC is not available, the fix must work within the existing simulated call architecture."
+    "Do not modify any files listed under frontend.immutablePaths.",
+    "All Motoko logic must remain in backend/main.mo; do not create additional actors.",
+    "Preserve all existing backend data structures and public API functions."
   ],
   "nonGoals": [
-    "Implementing real peer-to-peer WebRTC audio/video transmission.",
-    "Changes to the backend Motoko actor.",
-    "Changes to any other feature outside of the video call audio fix."
+    "Adding new features beyond restoring the existing UI sections.",
+    "Changing the warm coral/amber visual theme.",
+    "Implementing true peer-to-peer WebRTC; the simulated video call UI is sufficient.",
+    "Modifying the backend actor."
   ],
   "imageRequirements": {
     "required": [],

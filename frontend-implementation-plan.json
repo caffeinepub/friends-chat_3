@@ -1,28 +1,87 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix remote audio not audible during video calls",
+  "title": "Restore missing Messages, Friends panel, and Video Call UI",
   "requirements": [
     {
-      "id": "REQ-16",
-      "summary": "Fix the video call feature so that the remote party's audio is audible during a call by correctly attaching the remote media stream to a dedicated audio/video element with proper attributes",
+      "id": "REQ-17",
+      "summary": "Restore the main application layout in ChatView so that the public message feed (MessageFeed + MessageInput), the Friends panel (FriendsPanel), and the video call button/modal (VideoCallModal) are all visible and accessible",
       "acceptanceCriteria": [
-        "The VideoCallModal renders a dedicated audio or video element for the remote stream that has its srcObject set and is not muted.",
-        "getUserMedia in useVideoCall.ts requests both audio and video (audio: true, video: true).",
-        "The remote audio element has autoPlay set to true so playback begins without user interaction.",
-        "No console errors related to audio playback or media streams occur during the call lifecycle.",
-        "Ending the call stops all media tracks and removes the srcObject from the remote audio/video element."
+        "Opening the app shows the public chat message feed with past messages and a text input + send button at the bottom.",
+        "The Friends panel is visible as a sidebar or accessible toggle, showing the user search field, friend requests, and friend list.",
+        "Each friend list item and the private chat header display a video call button that opens the VideoCallModal.",
+        "The VideoCallModal opens correctly and shows the local camera feed with mute, camera toggle, and end-call controls.",
+        "Navigating between public chat, private chat, and the friends panel does not cause any section to disappear.",
+        "No console errors or blank screens occur on initial load."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/hooks/useVideoCall.ts",
+          "path": "frontend/src/components/ChatView.tsx",
           "operation": "modify",
-          "description": "Update getUserMedia call to request both audio and video by setting audio: true and video: true in the constraints. Ensure the returned stream includes audio tracks and that cleanup properly stops all tracks on unmount or call end."
+          "description": "Audit the component's render structure to ensure all three primary UI sections (MessageFeed + MessageInput, FriendsPanel, and VideoCallModal) are unconditionally rendered after authentication and profile setup. Verify the main layout container displays the message feed area, friends sidebar panel, and video call modal overlay without any being hidden by conditional logic. Ensure the layout uses a flex or grid structure that keeps the message feed and friends panel visible side-by-side (or stacked responsively), and that the VideoCallModal overlay is not blocked. Verify all state dependencies (selectedFriend, isVideoCallActive, remoteAudioRef) are correctly wired to child components."
+        },
+        {
+          "path": "frontend/src/components/FriendsPanel.tsx",
+          "operation": "modify",
+          "description": "Verify the FriendsPanel renders correctly as a sidebar or accessible section. Ensure the user search field, pending friend request list (using FriendRequestItem), and friend list (using FriendListItem) are all visible. Confirm the panel does not get hidden or unmounted when switching between public chat and private chat views. Check that the onSelectFriend callback is wired to each FriendListItem so clicking a friend updates the parent ChatView state."
+        },
+        {
+          "path": "frontend/src/components/MessageFeed.tsx",
+          "operation": "modify",
+          "description": "Ensure the MessageFeed component renders the scrollable public message list without being hidden or collapsed. Verify the auto-scroll logic and message rendering with avatar initials and color-coded bubbles work correctly. Confirm the feed container has explicit non-zero dimensions (height, flex-grow, or min-height) so it never collapses due to layout issues."
+        },
+        {
+          "path": "frontend/src/components/MessageInput.tsx",
+          "operation": "modify",
+          "description": "Verify the MessageInput component renders the controlled input form with a send button at the bottom of the message feed. Ensure the postMessage mutation is correctly wired and the Enter-to-send functionality works. Confirm the input bar remains visible and accessible regardless of the current view state (public chat vs. private chat)."
+        },
+        {
+          "path": "frontend/src/components/FriendListItem.tsx",
+          "operation": "modify",
+          "description": "Ensure the video call button is rendered in each FriendListItem row and appears on hover. Verify the button triggers the onStartVideoCall callback passed from the parent, which opens the VideoCallModal. Use the camera component's guidance to ensure the video call button is only clickable when the camera is ready (if applicable). Confirm the online status indicator (based on isOnline or lastOnline within 5 minutes) displays correctly."
+        },
+        {
+          "path": "frontend/src/components/PrivateChatView.tsx",
+          "operation": "modify",
+          "description": "Verify the PrivateChatView header includes a video call button that triggers the video call modal. Ensure the private chat view displays the message thread correctly with auto-scroll and the send form. Confirm the video call button is wired to the parent ChatView's video call state handler."
         },
         {
           "path": "frontend/src/components/VideoCallModal.tsx",
           "operation": "modify",
-          "description": "Add a dedicated <audio> element (or reuse the remote <video> element) with a ref to attach the remote media stream. Set the element's srcObject to the remote stream, ensure muted={false}, and set autoPlay={true}. On call end or component unmount, clear the srcObject and stop all remote tracks. Handle any audio playback errors gracefully and log them without breaking the UI."
+          "description": "Ensure the VideoCallModal renders as a full-screen overlay when isVideoCallActive is true. Verify the component displays the remote friend's avatar, local video preview (using the camera component's videoRef), and call controls (mute, camera toggle, end call). Use the camera component to support camera usage and verify the camera preview has explicit non-zero dimensions. Confirm the modal syncs local and remote media element refs with the useVideoCall hook and that the onEndCall callback correctly updates the parent ChatView state to close the modal."
+        }
+      ]
+    },
+    {
+      "id": "REQ-18",
+      "summary": "Audit and fix the ChatView component's conditional rendering logic and state management to ensure the authentication/profile gate does not prevent the main UI from rendering after profile setup is complete",
+      "acceptanceCriteria": [
+        "A returning user with an existing profile sees the full chat UI immediately on load without being re-prompted.",
+        "A new user completes the display name / profile setup flow and is then shown the full chat UI.",
+        "The friends panel renders alongside the message feed — neither replaces the other unless the layout calls for a single-column view.",
+        "The video call button is rendered in both FriendListItem rows (inside the Friends panel) and the PrivateChatView header.",
+        "All three UI sections (message feed, friends panel, video call controls) pass a visual smoke-test with no hidden or zero-height containers."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ChatView.tsx",
+          "operation": "modify",
+          "description": "Audit the conditional rendering logic that gates the main UI behind authentication and profile setup. Follow the authorization component's guidance to ensure the profile setup modal does not flash unnecessarily: use the useGetCallerUserProfile hook's isFetched flag to determine when to show the ProfileSetupModal or DisplayNamePrompt. Ensure that after a user completes profile setup (via onComplete callback), the main UI (MessageFeed, MessageInput, FriendsPanel, VideoCallModal) is immediately rendered without requiring a page reload. Verify that returning users with an existing profile bypass the setup flow and see the full chat UI on load. Confirm that the layout does not hide the friends panel or message feed based on selectedFriend state unless the design explicitly calls for a single-column mobile view."
+        },
+        {
+          "path": "frontend/src/components/DisplayNamePrompt.tsx",
+          "operation": "modify",
+          "description": "Ensure the DisplayNamePrompt modal correctly triggers the onComplete callback after the user profile is successfully created. Verify the modal does not prevent the main UI from rendering after completion. Use the authorization component's guidance for profile setup to ensure the useCreateUserProfile mutation invalidates the currentUserProfile query cache so the parent ChatView immediately reflects the new profile state."
+        },
+        {
+          "path": "frontend/src/components/ProfileSetupModal.tsx",
+          "operation": "modify",
+          "description": "Verify the ProfileSetupModal calls the createUserProfile mutation and triggers the onComplete callback after successful profile creation. Ensure the modal does not block the main UI from rendering after the user completes setup. Use the authorization component's guidance to ensure the query cache is invalidated so the parent ChatView reflects the new profile state without requiring a page reload."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Audit the useGetCallerUserProfile hook to ensure it follows the authorization component's guidance for preventing profile setup modal flash. Verify the hook returns a custom isLoading state that accounts for the actor fetching state, and that isFetched is true only when the actor is available and the query has completed. Ensure the createUserProfile and saveCallerUserProfile mutations correctly invalidate the currentUserProfile query cache so the parent component reflects the updated state immediately."
         }
       ]
     }

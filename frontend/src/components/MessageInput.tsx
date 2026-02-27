@@ -1,27 +1,29 @@
 import React, { useState } from 'react';
+import { UserProfile } from '../backend';
 import { usePostMessage } from '../hooks/useQueries';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Send } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
 
 interface MessageInputProps {
-  senderDisplayName: string;
+  currentUserProfile: UserProfile;
 }
 
-export default function MessageInput({ senderDisplayName }: MessageInputProps) {
-  const [content, setContent] = useState('');
+export default function MessageInput({ currentUserProfile }: MessageInputProps) {
+  const [input, setInput] = useState('');
   const postMessage = usePostMessage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = content.trim();
+    const trimmed = input.trim();
     if (!trimmed || postMessage.isPending) return;
 
     try {
-      await postMessage.mutateAsync({ sender: senderDisplayName, content: trimmed });
-      setContent('');
-    } catch (error) {
-      console.error('Failed to send message:', error);
+      await postMessage.mutateAsync({
+        sender: currentUserProfile.displayName,
+        content: trimmed,
+      });
+      setInput('');
+    } catch {
+      // keep input on error
     }
   };
 
@@ -33,31 +35,27 @@ export default function MessageInput({ senderDisplayName }: MessageInputProps) {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex items-center gap-2 px-4 py-3 border-t border-border bg-card"
-    >
-      <Input
-        value={content}
-        onChange={e => setContent(e.target.value)}
+    <form onSubmit={handleSubmit} className="flex items-center gap-2 px-4 py-3">
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type a message…"
+        placeholder="Send a message to everyone…"
         disabled={postMessage.isPending}
-        className="flex-1"
-        autoComplete="off"
+        className="flex-1 px-4 py-2.5 text-sm bg-muted rounded-full border border-border focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors disabled:opacity-60"
       />
-      <Button
+      <button
         type="submit"
-        size="icon"
-        disabled={!content.trim() || postMessage.isPending}
-        className="flex-shrink-0"
+        disabled={!input.trim() || postMessage.isPending}
+        className="w-10 h-10 flex items-center justify-center bg-primary text-primary-foreground rounded-full hover:opacity-90 transition-opacity disabled:opacity-40 flex-shrink-0"
       >
         {postMessage.isPending ? (
-          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <Loader2 className="w-4 h-4 animate-spin" />
         ) : (
           <Send className="w-4 h-4" />
         )}
-      </Button>
+      </button>
     </form>
   );
 }

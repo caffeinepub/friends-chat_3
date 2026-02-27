@@ -1,10 +1,11 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 17,
+  "projectStateVersion": 19,
   "summary": "A chat app for a user and their friends to communicate, with plans to add a friends/contacts system including adding friends by username, seeing who's online, and private chats. FaceTime (video calling) feature has been requested.",
   "architectural_notes": [],
   "known_issues": [
-    "Remote audio not audible during video calls (Version 7)"
+    "Remote audio not audible during video calls (Version 7)",
+    "Main UI tabs/sections (messages, video call, friends) not visible or missing in Version 8"
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -109,6 +110,22 @@
       "title": "Fix the video call feature so that the remote party's audio is audible during a call. The VideoCallModal must correctly attach the remote media stream (including audio tracks) to the remote video/audio element so the local user can hear the other person. Ensure the audio element or video element used for remote playback has its srcObject set to the remote stream, is not muted, and that autoPlay is set. Also verify that getUserMedia requests audio: true so the local microphone track is captured and available for the simulated remote audio path.",
       "reqIds": [
         "REQ-16"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-restore-the-main-application-layout-in-chatview-so-that-the-public-message-feed-messagefeed-messageinput-the-friends-panel-friendspanel-and-the-video-call-button-modal-videocallmodal-are-all-visible-and-accessible-the-root-app-renders-chatview-and-chatview-must-correctly-mount-and-display-all-three-sections-the-chat-area-with-the-scrollable-message-feed-and-input-bar-the-friends-sidebar-panel-and-the-video-call-modal-trigger-without-any-section-being-hidden-unmounted-or-missing-from-the-dom",
+      "title": "Restore the main application layout in ChatView so that the public message feed (MessageFeed + MessageInput), the Friends panel (FriendsPanel), and the video call button/modal (VideoCallModal) are all visible and accessible. The root App renders ChatView, and ChatView must correctly mount and display all three sections — the chat area with the scrollable message feed and input bar, the friends sidebar panel, and the video call modal trigger — without any section being hidden, unmounted, or missing from the DOM.",
+      "reqIds": [
+        "REQ-17"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-audit-and-fix-the-chatview-component-s-conditional-rendering-logic-and-state-management-ensure-that-the-authentication-profile-gate-displaynameprompt-or-profilesetupmodal-does-not-prevent-the-main-ui-from-rendering-after-profile-setup-is-complete-after-a-user-has-a-profile-chatview-must-render-all-primary-ui-sections-unconditionally-the-message-feed-area-the-friends-sidebar-and-any-active-private-chat-or-video-call-modal-overlay",
+      "title": "Audit and fix the ChatView component's conditional rendering logic and state management. Ensure that the authentication/profile gate (DisplayNamePrompt or ProfileSetupModal) does not prevent the main UI from rendering after profile setup is complete. After a user has a profile, ChatView must render all primary UI sections unconditionally: the message feed area, the friends sidebar, and any active private chat or video call modal overlay.",
+      "reqIds": [
+        "REQ-18"
       ],
       "version": 1
     }
