@@ -8,10 +8,10 @@ import Runtime "mo:core/Runtime";
 import AccessControl "authorization/access-control";
 import MixinAuthorization "authorization/MixinAuthorization";
 
-import Migration "migration";
+
 
 // Use with clause to enable data migration on upgrades.
-(with migration = Migration.run)
+
 actor {
   public type Message = {
     sender : Text;

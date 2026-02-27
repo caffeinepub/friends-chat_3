@@ -1,138 +1,43 @@
 {
   "kind": "build_request",
-  "title": "Fix app bugs reported after Version 5 deployment",
+  "title": "Fix video call feature bugs",
   "projectName": "Friends Chat",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-9",
-      "text": "Audit and fix bugs in the public chat message feed: ensure messages load correctly, sending a new message works without errors, and the message feed auto-scrolls to the latest message after posting.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "The app is not working correctly. It has bugs in it that I need you to fix."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Public chat messages load and display in chronological order on page load.",
-        "Sending a new message via the MessageInput form posts successfully and appears in the feed.",
-        "The feed auto-scrolls to the newest message after a message is sent or received.",
-        "No console errors are thrown during normal chat usage."
-      ]
-    },
-    {
-      "id": "REQ-10",
-      "text": "Audit and fix bugs in the Friends panel: user search by username returns correct results, sending a friend request succeeds, incoming friend requests can be accepted or declined, and the friend list displays with accurate online/offline status indicators.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "The app is not working correctly. It has bugs in it that I need you to fix."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Searching for a username returns matching users or an empty state message.",
-        "Sending a friend request completes without error and reflects in the recipient's incoming requests.",
-        "Accepting a friend request moves the user to the friend list.",
-        "Declining a friend request removes it from the incoming list.",
-        "Online/offline status indicators reflect each friend's lastOnline timestamp correctly."
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "text": "Audit and fix bugs in the private chat view: opening a private chat with a friend loads the correct message thread, sending messages in a private thread works, and the view auto-scrolls to the latest message.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "The app is not working correctly. It has bugs in it that I need you to fix."
-        ]
-      },
-      "acceptanceCriteria": [
-        "Clicking a friend in the Friends panel opens the correct private chat thread.",
-        "Private chat messages load and display in chronological order.",
-        "Sending a message in a private thread posts successfully and appears in the thread.",
-        "The private chat view auto-scrolls to the newest message after sending or receiving."
-      ]
-    },
-    {
-      "id": "REQ-12",
-      "text": "Audit and fix bugs in the video call modal: the video call button in both the Friends panel and the Private Chat view opens the VideoCallModal correctly, the local camera stream initialises without errors, mute/camera toggle controls function as expected, and ending the call properly cleans up the stream and closes the modal.",
+      "id": "REQ-15",
+      "text": "Audit and fix all bugs in the video call feature end-to-end: the video call button in both FriendListItem (Friends panel) and PrivateChatView header must correctly open the VideoCallModal; the useVideoCall hook must successfully request and initialise the local camera/microphone media stream without errors; mute (audio) and camera toggle controls must reflect the correct state and actually mute/unmute or enable/disable the corresponding media track; ending the call must stop all media tracks, release the stream, and close/unmount the VideoCallModal cleanly; and the simulated 'Calling…' → 'Connected' state transition must work as intended. Ensure no unhandled promise rejections or console errors occur during the full call lifecycle.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-6"
+          "msg-7"
         ],
         "quotes": [
-          "The app is not working correctly. It has bugs in it that I need you to fix."
+          "The video call feature isn't working"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking the video call button opens the VideoCallModal in a 'Calling…' state.",
-        "The local camera feed appears in the picture-in-picture area of the modal.",
-        "The mute button toggles the microphone track on/off without errors.",
-        "The camera toggle button turns the video track on/off without errors.",
-        "Clicking 'End Call' stops all media tracks, clears the stream, and closes the modal.",
-        "Pressing Escape also ends the call and closes the modal.",
-        "No unhandled promise rejections or console errors occur during the call lifecycle."
-      ]
-    },
-    {
-      "id": "REQ-13",
-      "text": "Audit and fix bugs in the user profile setup flow: the DisplayNamePrompt and ProfileSetupModal correctly create or retrieve a user profile on first launch, and returning users are not re-prompted unnecessarily.",
-      "target": "both",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "The app is not working correctly. It has bugs in it that I need you to fix."
-        ]
-      },
-      "acceptanceCriteria": [
-        "A new user is prompted to enter a display name and username exactly once.",
-        "After profile creation, the user enters the main chat view without being re-prompted.",
-        "A returning user is not shown the profile setup modal on subsequent visits.",
-        "Profile data (username, display name) is persisted and retrieved correctly from the backend."
-      ]
-    },
-    {
-      "id": "REQ-14",
-      "text": "Fix any backend Motoko actor issues: ensure all public functions (postMessage, getMessages, createUserProfile, getUserProfile, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getPrivateThread, sendPrivateMessage, updateOnlineStatus) return correct results and do not trap or throw unexpected errors under normal usage.",
-      "target": "backend",
-      "source": {
-        "messageIds": [
-          "msg-6"
-        ],
-        "quotes": [
-          "The app is not working correctly. It has bugs in it that I need you to fix."
-        ]
-      },
-      "acceptanceCriteria": [
-        "All backend query and update functions return expected result types without trapping.",
-        "Concurrent calls to postMessage do not produce duplicate or out-of-order messages.",
-        "Friend request state transitions (pending → accepted/declined) are handled atomically.",
-        "Private message threads are scoped correctly to the two participants and not visible to others.",
-        "Online status updates persist and are retrievable via getUserProfile."
+        "Clicking the video call button on a friend list item opens the VideoCallModal without errors.",
+        "Clicking the video call button in the private chat header opens the VideoCallModal without errors.",
+        "The local camera stream initialises successfully and the local video feed is visible in the picture-in-picture area.",
+        "The mute button toggles the audio track on/off and its icon/label reflects the current muted state.",
+        "The camera toggle button enables/disables the video track and its icon/label reflects the current camera-off state.",
+        "The simulated 'Calling…' state transitions to 'Connected' after the expected delay.",
+        "Clicking 'End Call' stops all media tracks, releases the media stream, and closes the VideoCallModal.",
+        "No unhandled promise rejections or JavaScript console errors appear during the full call lifecycle.",
+        "The VideoCallModal UI matches the existing warm coral/amber theme."
       ]
     }
   ],
   "constraints": [
-    "Do not change the existing data model or break backwards compatibility with stored state.",
-    "Do not modify files listed in frontend.immutablePaths.",
-    "All fixes must preserve the existing warm coral/amber visual theme."
+    "Do not change any backend Motoko logic — this is a frontend-only fix.",
+    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
+    "True peer-to-peer WebRTC is not available; the remote video area must remain a simulated placeholder."
   ],
   "nonGoals": [
-    "Adding new features beyond what is already implemented.",
-    "Redesigning the UI or changing the visual theme.",
-    "Adding real peer-to-peer WebRTC functionality (video call remains simulated)."
+    "Real peer-to-peer WebRTC signalling or actual remote video streams.",
+    "Changes to public chat, friends panel search, friend requests, or private chat messaging.",
+    "Backend schema or Motoko actor changes."
   ],
   "imageRequirements": {
     "required": [],

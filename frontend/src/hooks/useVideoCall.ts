@@ -1,9 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
+export type CallStatus = 'idle' | 'calling' | 'connected';
+
 export interface UseVideoCallReturn {
+  callStatus: CallStatus;
   isCallActive: boolean;
   isMuted: boolean;
   isCameraOff: boolean;
+  mediaError: string | null;
   startCall: () => Promise<void>;
   endCall: () => void;
   toggleMute: () => void;
@@ -12,38 +16,59 @@ export interface UseVideoCallReturn {
 }
 
 export function useVideoCall(): UseVideoCallReturn {
-  const [isCallActive, setIsCallActive] = useState(false);
+  const [callStatus, setCallStatus] = useState<CallStatus>('idle');
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
+  const [mediaError, setMediaError] = useState<string | null>(null);
+
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const connectedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Whenever the stream or the video element changes, wire them together.
+  // This handles the case where the stream is ready before the video element mounts.
+  const attachStream = useCallback(() => {
+    if (localVideoRef.current && streamRef.current) {
+      localVideoRef.current.srcObject = streamRef.current;
+      localVideoRef.current.play().catch(() => {
+        // Autoplay may be blocked; the muted+playsInline attributes handle most cases
+      });
+    }
+  }, []);
 
   const startCall = useCallback(async () => {
+    setMediaError(null);
+    setIsMuted(false);
+    setIsCameraOff(false);
+    setCallStatus('calling');
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
       streamRef.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-        localVideoRef.current.play().catch(() => {
-          // Autoplay may be blocked; user interaction will trigger play
-        });
-      }
-      setIsCallActive(true);
-      setIsMuted(false);
-      setIsCameraOff(false);
-    } catch (error) {
-      console.error('Failed to start call:', error);
-      // Still mark call as active even without camera (simulated)
-      setIsCallActive(true);
-      setIsMuted(false);
+      // Attach immediately if the video element is already mounted
+      attachStream();
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Could not access camera/microphone';
+      setMediaError(message);
+      // Still proceed with the call in simulated mode (camera off)
       setIsCameraOff(true);
     }
-  }, []);
+
+    // Simulate "Calling…" → "Connected" after 3 seconds
+    connectedTimerRef.current = setTimeout(() => {
+      setCallStatus('connected');
+    }, 3000);
+  }, [attachStream]);
 
   const endCall = useCallback(() => {
+    if (connectedTimerRef.current) {
+      clearTimeout(connectedTimerRef.current);
+      connectedTimerRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -51,18 +76,20 @@ export function useVideoCall(): UseVideoCallReturn {
     if (localVideoRef.current) {
       localVideoRef.current.srcObject = null;
     }
-    setIsCallActive(false);
+    setCallStatus('idle');
     setIsMuted(false);
     setIsCameraOff(false);
+    setMediaError(null);
   }, []);
 
   const toggleMute = useCallback(() => {
     if (streamRef.current) {
       const audioTracks = streamRef.current.getAudioTracks();
+      const newEnabled = audioTracks.length > 0 ? !audioTracks[0].enabled : false;
       audioTracks.forEach(track => {
-        track.enabled = !track.enabled;
+        track.enabled = newEnabled;
       });
-      setIsMuted(prev => !prev);
+      setIsMuted(!newEnabled);
     } else {
       setIsMuted(prev => !prev);
     }
@@ -71,10 +98,11 @@ export function useVideoCall(): UseVideoCallReturn {
   const toggleCamera = useCallback(() => {
     if (streamRef.current) {
       const videoTracks = streamRef.current.getVideoTracks();
+      const newEnabled = videoTracks.length > 0 ? !videoTracks[0].enabled : false;
       videoTracks.forEach(track => {
-        track.enabled = !track.enabled;
+        track.enabled = newEnabled;
       });
-      setIsCameraOff(prev => !prev);
+      setIsCameraOff(!newEnabled);
     } else {
       setIsCameraOff(prev => !prev);
     }
@@ -83,6 +111,9 @@ export function useVideoCall(): UseVideoCallReturn {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      if (connectedTimerRef.current) {
+        clearTimeout(connectedTimerRef.current);
+      }
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
         streamRef.current = null;
@@ -91,9 +122,11 @@ export function useVideoCall(): UseVideoCallReturn {
   }, []);
 
   return {
-    isCallActive,
+    callStatus,
+    isCallActive: callStatus !== 'idle',
     isMuted,
     isCameraOff,
+    mediaError,
     startCall,
     endCall,
     toggleMute,

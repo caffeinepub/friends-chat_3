@@ -31,9 +31,10 @@ export default function ChatView() {
   const updateOnlineStatus = useUpdateOnlineStatus();
 
   const {
-    isCallActive,
+    callStatus,
     isMuted,
     isCameraOff,
+    mediaError,
     startCall,
     endCall,
     toggleMute,
@@ -86,8 +87,14 @@ export default function ChatView() {
   };
 
   const handleStartCall = (friendPrincipal: Principal) => {
+    // Set the friend first so the modal mounts and the video element is created,
+    // then start the call (which will attach the stream once getUserMedia resolves).
     setCallFriend(friendPrincipal);
-    startCall();
+    // Use a microtask delay so React can flush the state update and mount the modal
+    // before startCall tries to attach the stream to localVideoRef.
+    setTimeout(() => {
+      startCall();
+    }, 0);
   };
 
   const handleEndCall = () => {
@@ -218,12 +225,15 @@ export default function ChatView() {
         }} />
       )}
 
-      {/* Video call modal */}
-      {isCallActive && callFriend && (
+      {/* Video call modal — render as soon as callFriend is set so the video
+          element mounts before the stream is attached */}
+      {callFriend && (
         <VideoCallModal
           friendPrincipal={callFriend}
+          callStatus={callStatus}
           isMuted={isMuted}
           isCameraOff={isCameraOff}
+          mediaError={mediaError}
           onToggleMute={toggleMute}
           onToggleCamera={toggleCamera}
           onEndCall={handleEndCall}

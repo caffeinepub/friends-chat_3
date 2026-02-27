@@ -1,159 +1,47 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Fix app bugs reported after Version 5 deployment",
+  "title": "Fix video call feature bugs",
   "requirements": [
     {
-      "id": "REQ-9",
-      "summary": "Audit and fix bugs in the public chat message feed: ensure messages load correctly, sending a new message works without errors, and the message feed auto-scrolls to the latest message after posting.",
+      "id": "REQ-15",
+      "summary": "Audit and fix all bugs in the video call feature end-to-end, ensuring the video call button correctly opens the VideoCallModal, the useVideoCall hook successfully initialises local media streams, mute and camera controls work correctly, call ending releases all resources cleanly, and the simulated call state transitions work as intended with no console errors.",
       "acceptanceCriteria": [
-        "Public chat messages load and display in chronological order on page load.",
-        "Sending a new message via the MessageInput form posts successfully and appears in the feed.",
-        "The feed auto-scrolls to the newest message after a message is sent or received.",
-        "No console errors are thrown during normal chat usage."
+        "Clicking the video call button on a friend list item opens the VideoCallModal without errors.",
+        "Clicking the video call button in the private chat header opens the VideoCallModal without errors.",
+        "The local camera stream initialises successfully and the local video feed is visible in the picture-in-picture area.",
+        "The mute button toggles the audio track on/off and its icon/label reflects the current muted state.",
+        "The camera toggle button enables/disables the video track and its icon/label reflects the current camera-off state.",
+        "The simulated 'Calling…' state transitions to 'Connected' after the expected delay.",
+        "Clicking 'End Call' stops all media tracks, releases the media stream, and closes the VideoCallModal.",
+        "No unhandled promise rejections or JavaScript console errors appear during the full call lifecycle.",
+        "The VideoCallModal UI matches the existing warm coral/amber theme."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/components/MessageFeed.tsx",
+          "path": "frontend/src/hooks/useVideoCall.ts",
           "operation": "modify",
-          "description": "Fix message loading and auto-scroll behavior: ensure messages render in chronological order, verify the scrollToBottom ref callback triggers correctly after new messages arrive, fix any race conditions in the useEffect dependencies, and ensure the scroll container has proper overflow and height constraints."
+          "description": "Fix the useVideoCall hook to properly request and initialise the local camera/microphone media stream using getUserMedia, handle promise rejections gracefully, ensure mute and camera toggle controls correctly enable/disable the corresponding media tracks and reflect accurate state, properly stop all media tracks and release the stream when ending the call, and implement the simulated 'Calling…' to 'Connected' state transition with proper cleanup on unmount."
         },
         {
-          "path": "frontend/src/components/MessageInput.tsx",
+          "path": "frontend/src/components/VideoCallModal.tsx",
           "operation": "modify",
-          "description": "Fix message submission: verify the form onSubmit handler calls the usePostMessage mutation correctly, ensure input is cleared only after successful submission, add proper error handling for failed posts, and confirm the loading state prevents duplicate submissions."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Fix the usePostMessage mutation: ensure it invalidates the 'messages' query key after a successful post to trigger a refetch, verify the mutation calls actor.postMessage with correct parameters (sender display name and content), and add error logging for debugging."
-        }
-      ]
-    },
-    {
-      "id": "REQ-10",
-      "summary": "Audit and fix bugs in the Friends panel: user search by username returns correct results, sending a friend request succeeds, incoming friend requests can be accepted or declined, and the friend list displays with accurate online/offline status indicators.",
-      "acceptanceCriteria": [
-        "Searching for a username returns matching users or an empty state message.",
-        "Sending a friend request completes without error and reflects in the recipient's incoming requests.",
-        "Accepting a friend request moves the user to the friend list.",
-        "Declining a friend request removes it from the incoming list.",
-        "Online/offline status indicators reflect each friend's lastOnline timestamp correctly."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/FriendsPanel.tsx",
-          "operation": "modify",
-          "description": "Fix user search and friend request flow: verify the search input correctly triggers the useSearchUsers query with debouncing, ensure the useSendFriendRequest mutation invalidates both 'pendingFriendRequests' and 'searchUsers' queries after success, fix the decline handler to call the correct backend method and invalidate queries, and add proper empty state messaging for zero search results."
+          "description": "Fix the VideoCallModal to correctly wire the local video stream to the picture-in-picture video element using the videoRef from useVideoCall, ensure mute and camera toggle buttons call the appropriate hook functions and display correct icon/label states, properly invoke endCall to stop media and close the modal, ensure the simulated call state UI displays 'Calling…' then transitions to 'Connected', handle errors from the useVideoCall hook gracefully with user-friendly messages, and verify the modal styling matches the existing warm coral/amber theme using the video-call CSS custom properties."
         },
         {
           "path": "frontend/src/components/FriendListItem.tsx",
           "operation": "modify",
-          "description": "Fix online/offline status indicator: verify the isOnline calculation correctly compares profile.lastOnline against the current timestamp with an appropriate threshold (e.g., 5 minutes), ensure the status dot color reflects the correct state, and confirm the profile prop is passed and not null before accessing lastOnline."
-        },
-        {
-          "path": "frontend/src/components/FriendRequestItem.tsx",
-          "operation": "modify",
-          "description": "Fix friend request acceptance: ensure the useAcceptFriendRequest mutation invalidates 'pendingFriendRequests', 'friendsList', and 'userProfile' queries after success, add error handling for failed acceptance, and verify the fromUser Principal is passed correctly to the mutation."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Fix friend-related mutations and queries: ensure useSendFriendRequest, useAcceptFriendRequest, and useDeclineFriendRequest all invalidate the correct query keys after success, verify useSearchUsers correctly calls actor.searchUsersByUsername, and confirm useFriendsList and usePendingFriendRequests return data in the expected format."
-        }
-      ]
-    },
-    {
-      "id": "REQ-11",
-      "summary": "Audit and fix bugs in the private chat view: opening a private chat with a friend loads the correct message thread, sending messages in a private thread works, and the view auto-scrolls to the latest message.",
-      "acceptanceCriteria": [
-        "Clicking a friend in the Friends panel opens the correct private chat thread.",
-        "Private chat messages load and display in chronological order.",
-        "Sending a message in a private thread posts successfully and appears in the thread.",
-        "The private chat view auto-scrolls to the newest message after sending or receiving."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/PrivateChatView.tsx",
-          "operation": "modify",
-          "description": "Fix private chat thread loading and message sending: verify usePrivateThread correctly fetches the thread for the selected friend's Principal, ensure useSendPrivateMessage invalidates the thread query after success, fix the auto-scroll logic to trigger after new messages load, confirm the message feed renders messages in chronological order, and add error handling for failed thread creation or message sends."
-        },
-        {
-          "path": "frontend/src/components/ChatView.tsx",
-          "operation": "modify",
-          "description": "Fix friend selection and private chat navigation: ensure the onSelectFriend callback correctly sets the selectedFriend state with the friend's Principal, verify the PrivateChatView receives the correct friend prop, and confirm the back button properly clears selectedFriend to return to the public chat view."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Fix private thread queries and mutations: ensure usePrivateThread calls actor.getPrivateThread or actor.getThreadMessages with the correct Principal parameter, verify useSendPrivateMessage calls actor.sendPrivateMessage or actor.sendMessageToThread with threadId and content, and confirm both invalidate the correct query keys after mutation success."
-        }
-      ]
-    },
-    {
-      "id": "REQ-12",
-      "summary": "Audit and fix bugs in the video call modal: the video call button in both the Friends panel and the Private Chat view opens the VideoCallModal correctly, the local camera stream initialises without errors, mute/camera toggle controls function as expected, and ending the call properly cleans up the stream and closes the modal.",
-      "acceptanceCriteria": [
-        "Clicking the video call button opens the VideoCallModal in a 'Calling…' state.",
-        "The local camera feed appears in the picture-in-picture area of the modal.",
-        "The mute button toggles the microphone track on/off without errors.",
-        "The camera toggle button turns the video track on/off without errors.",
-        "Clicking 'End Call' stops all media tracks, clears the stream, and closes the modal.",
-        "Pressing Escape also ends the call and closes the modal.",
-        "No unhandled promise rejections or console errors occur during the call lifecycle."
-      ],
-      "file_operations": [
-        {
-          "path": "frontend/src/components/VideoCallModal.tsx",
-          "operation": "modify",
-          "description": "Fix video call modal and camera stream handling: verify the modal renders when isCallActive is true, ensure the local video element receives the camera stream from useVideoCall and plays inline, fix the mute and camera toggle buttons to call the correct hook methods, confirm the end call button calls endCall and closes the modal, add Escape key listener to end the call, and add error boundaries or try-catch blocks around media stream operations to prevent unhandled promise rejections. Use the camera component to support camera stream initialization if needed."
-        },
-        {
-          "path": "frontend/src/hooks/useVideoCall.ts",
-          "operation": "modify",
-          "description": "Fix video call hook logic: ensure startCall correctly initializes the MediaStream with audio and video tracks, verify toggleMute and toggleCamera modify the stream tracks without errors, confirm endCall stops all tracks and clears the stream, add proper cleanup in the useEffect return callback, and wrap all async media operations in try-catch with error logging."
-        },
-        {
-          "path": "frontend/src/components/FriendsPanel.tsx",
-          "operation": "modify",
-          "description": "Fix video call button in Friends panel: ensure the video call button (if present) correctly triggers the onStartCall callback with the selected friend, verify the button is not disabled inappropriately, and confirm it opens the VideoCallModal."
+          "description": "Ensure the video call button in FriendListItem correctly triggers the onVideoCall callback with the friend's Principal when clicked, verify the button is properly wired to open the VideoCallModal in ChatView, and confirm the button appears on hover with correct styling and accessibility attributes."
         },
         {
           "path": "frontend/src/components/PrivateChatView.tsx",
           "operation": "modify",
-          "description": "Fix video call button in Private Chat view: ensure the video call button correctly triggers the onStartCall callback with the current friend, verify the button is wired to the ChatView's video call state, and confirm it opens the VideoCallModal."
-        }
-      ]
-    },
-    {
-      "id": "REQ-13",
-      "summary": "Audit and fix bugs in the user profile setup flow: the DisplayNamePrompt and ProfileSetupModal correctly create or retrieve a user profile on first launch, and returning users are not re-prompted unnecessarily.",
-      "acceptanceCriteria": [
-        "A new user is prompted to enter a display name and username exactly once.",
-        "After profile creation, the user enters the main chat view without being re-prompted.",
-        "A returning user is not shown the profile setup modal on subsequent visits.",
-        "Profile data (username, display name) is persisted and retrieved correctly from the backend."
-      ],
-      "file_operations": [
+          "description": "Ensure the video call button in the PrivateChatView header correctly triggers the onVideoCall callback with the friend's Principal when clicked, verify the button is properly wired to open the VideoCallModal in ChatView, and confirm the button styling matches the existing UI theme."
+        },
         {
           "path": "frontend/src/components/ChatView.tsx",
           "operation": "modify",
-          "description": "Fix profile setup prompt logic: ensure the component uses useGetCallerUserProfile with proper loading and fetched states, verify showProfileSetup condition is isAuthenticated && !profileLoading && isFetched && userProfile === null to prevent flash of profile modal, confirm the DisplayNamePrompt and ProfileSetupModal are conditionally rendered only when showProfileSetup is true, and ensure after profile creation the user is not re-prompted."
-        },
-        {
-          "path": "frontend/src/components/ProfileSetupModal.tsx",
-          "operation": "modify",
-          "description": "Fix profile creation mutation: verify the useCreateUserProfile mutation correctly calls actor.createUserProfile or actor.saveCallerUserProfile with username and displayName, ensure the mutation invalidates the 'currentUserProfile' query key after success to trigger a refetch, add error handling for duplicate usernames or failed creation, and confirm the modal closes after successful profile creation."
-        },
-        {
-          "path": "frontend/src/components/DisplayNamePrompt.tsx",
-          "operation": "modify",
-          "description": "Fix display name prompt submission: verify the form correctly submits the display name to create a profile (potentially calling a simplified profile creation), ensure the prompt only appears once for new users, and confirm it does not reappear after the profile is created."
-        },
-        {
-          "path": "frontend/src/hooks/useQueries.ts",
-          "operation": "modify",
-          "description": "Fix useGetCallerUserProfile query: ensure the query correctly calls actor.getCallerUserProfile, verify the isLoading state properly reflects actorFetching || query.isLoading, confirm isFetched is set to !!actor && query.isFetched, add retry: false to prevent refetching on failure, and ensure the query is enabled only when actor is available and not fetching. Follow the authorization component usage instructions to prevent profile setup modal flash."
+          "description": "Verify that ChatView correctly manages the video call modal state, passes the selected friend's Principal to VideoCallModal when opened, handles the onVideoCall callback from both FriendListItem and PrivateChatView, and properly closes the modal when the call ends or the user dismisses it."
         }
       ]
     }

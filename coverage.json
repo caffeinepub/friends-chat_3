@@ -1,127 +1,41 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T02:45:43.118Z",
+  "generatedAt": "2026-02-27T02:56:01.385Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 6,
-    "implemented": 5,
+    "total": 1,
+    "implemented": 1,
     "items": [
       {
-        "id": "REQ-10",
-        "summary": "Audit and fix bugs in the Friends panel: user search by username returns correct results, sending a friend request succeeds, incoming friend requests can be accepted or declined, and the friend list displays with accurate online/offline status indicators.",
+        "id": "REQ-15",
+        "summary": "Audit and fix all bugs in the video call feature end-to-end: the video call button in both FriendListItem (Friends panel) and PrivateChatView header must correctly open the VideoCallModal; the useVideoCall hook must successfully request and initialise the local camera/microphone media stream without errors; mute (audio) and camera toggle controls must reflect the correct state and actually mute/unmute or enable/disable the corresponding media track; ending the call must stop all media tracks, release the stream, and close/unmount the VideoCallModal cleanly; and the simulated 'Calling…' → 'Connected' state transition must work as intended. Ensure no unhandled promise rejections or console errors occur during the full call lifecycle.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/components/FriendsPanel.tsx",
-          "frontend/src/components/FriendListItem.tsx",
-          "frontend/src/components/FriendRequestItem.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/FriendsPanel.tsx",
-          "frontend/src/components/FriendListItem.tsx",
-          "frontend/src/components/FriendRequestItem.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ]
-      },
-      {
-        "id": "REQ-11",
-        "summary": "Audit and fix bugs in the private chat view: opening a private chat with a friend loads the correct message thread, sending messages in a private thread works, and the view auto-scrolls to the latest message.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/PrivateChatView.tsx",
-          "frontend/src/components/ChatView.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/PrivateChatView.tsx",
-          "frontend/src/components/ChatView.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ]
-      },
-      {
-        "id": "REQ-12",
-        "summary": "Audit and fix bugs in the video call modal: the video call button in both the Friends panel and the Private Chat view opens the VideoCallModal correctly, the local camera stream initialises without errors, mute/camera toggle controls function as expected, and ending the call properly cleans up the stream and closes the modal.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/VideoCallModal.tsx",
           "frontend/src/hooks/useVideoCall.ts",
-          "frontend/src/components/FriendsPanel.tsx",
-          "frontend/src/components/PrivateChatView.tsx"
-        ],
-        "matchedFiles": [
           "frontend/src/components/VideoCallModal.tsx",
+          "frontend/src/components/FriendListItem.tsx",
+          "frontend/src/components/PrivateChatView.tsx",
+          "frontend/src/components/ChatView.tsx"
+        ],
+        "matchedFiles": [
           "frontend/src/hooks/useVideoCall.ts",
-          "frontend/src/components/FriendsPanel.tsx",
-          "frontend/src/components/PrivateChatView.tsx"
-        ]
-      },
-      {
-        "id": "REQ-13",
-        "summary": "Audit and fix bugs in the user profile setup flow: the DisplayNamePrompt and ProfileSetupModal correctly create or retrieve a user profile on first launch, and returning users are not re-prompted unnecessarily.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/ChatView.tsx",
-          "frontend/src/components/ProfileSetupModal.tsx",
-          "frontend/src/components/DisplayNamePrompt.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/ChatView.tsx",
-          "frontend/src/components/ProfileSetupModal.tsx",
-          "frontend/src/components/DisplayNamePrompt.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ]
-      },
-      {
-        "id": "REQ-14",
-        "summary": "Fix any backend Motoko actor issues: ensure all public functions (postMessage, getMessages, createUserProfile, getUserProfile, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getPrivateThread, sendPrivateMessage, updateOnlineStatus) return correct results and do not trap or throw unexpected errors under normal usage.",
-        "status": "unknown",
-        "plannedFiles": [],
-        "matchedFiles": []
-      },
-      {
-        "id": "REQ-9",
-        "summary": "Audit and fix bugs in the public chat message feed: ensure messages load correctly, sending a new message works without errors, and the message feed auto-scrolls to the latest message after posting.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/components/MessageFeed.tsx",
-          "frontend/src/components/MessageInput.tsx",
-          "frontend/src/hooks/useQueries.ts"
-        ],
-        "matchedFiles": [
-          "frontend/src/components/MessageFeed.tsx",
-          "frontend/src/components/MessageInput.tsx",
-          "frontend/src/hooks/useQueries.ts"
+          "frontend/src/components/VideoCallModal.tsx",
+          "frontend/src/components/ChatView.tsx"
         ]
       }
     ]
   },
   "changedFiles": [
-    "backend/main.mo",
-    "backend/migration.mo",
     "build-request.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/src/backend.d.ts",
-    "frontend/src/backend.ts",
     "frontend/src/components/ChatView.tsx",
-    "frontend/src/components/DisplayNamePrompt.tsx",
-    "frontend/src/components/FriendListItem.tsx",
-    "frontend/src/components/FriendRequestItem.tsx",
-    "frontend/src/components/FriendsPanel.tsx",
-    "frontend/src/components/MessageFeed.tsx",
-    "frontend/src/components/MessageInput.tsx",
-    "frontend/src/components/PrivateChatView.tsx",
-    "frontend/src/components/ProfileSetupModal.tsx",
     "frontend/src/components/VideoCallModal.tsx",
-    "frontend/src/declarations/backend.did.d.ts",
-    "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useQueries.ts",
     "frontend/src/hooks/useVideoCall.ts",
     "project_state.json",
     "scratch/component-selection.json",

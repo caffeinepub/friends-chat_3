@@ -1,9 +1,11 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 13,
+  "projectStateVersion": 15,
   "summary": "A chat app for a user and their friends to communicate, with plans to add a friends/contacts system including adding friends by username, seeing who's online, and private chats. FaceTime (video calling) feature has been requested.",
   "architectural_notes": [],
-  "known_issues": [],
+  "known_issues": [
+    "Video call feature is not working in production (Version 6)"
+  ],
   "isFixRequest": true,
   "existing_features": [
     {
@@ -91,6 +93,14 @@
       "title": "Audit and fix bugs in the user profile setup flow: the DisplayNamePrompt and ProfileSetupModal correctly create or retrieve a user profile on first launch, and returning users are not re-prompted unnecessarily.",
       "reqIds": [
         "REQ-13"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-audit-and-fix-all-bugs-in-the-video-call-feature-end-to-end-the-video-call-button-in-both-friendlistitem-friends-panel-and-privatechatview-header-must-correctly-open-the-videocallmodal-the-usevideocall-hook-must-successfully-request-and-initialise-the-local-camera-microphone-media-stream-without-errors-mute-audio-and-camera-toggle-controls-must-reflect-the-correct-state-and-actually-mute-unmute-or-enable-disable-the-corresponding-media-track-ending-the-call-must-stop-all-media-tracks-release-the-stream-and-close-unmount-the-videocallmodal-cleanly-and-the-simulated-calling-connected-state-transition-must-work-as-intended-ensure-no-unhandled-promise-rejections-or-console-errors-occur-during-the-full-call-lifecycle",
+      "title": "Audit and fix all bugs in the video call feature end-to-end: the video call button in both FriendListItem (Friends panel) and PrivateChatView header must correctly open the VideoCallModal; the useVideoCall hook must successfully request and initialise the local camera/microphone media stream without errors; mute (audio) and camera toggle controls must reflect the correct state and actually mute/unmute or enable/disable the corresponding media track; ending the call must stop all media tracks, release the stream, and close/unmount the VideoCallModal cleanly; and the simulated 'Calling…' → 'Connected' state transition must work as intended. Ensure no unhandled promise rejections or console errors occur during the full call lifecycle.",
+      "reqIds": [
+        "REQ-15"
       ],
       "version": 1
     }
