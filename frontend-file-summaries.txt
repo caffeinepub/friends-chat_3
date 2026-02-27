@@ -1,0 +1,10 @@
+{
+  "frontend/src/App.tsx": "Root app component that renders the ChatView as the sole page.",
+  "frontend/src/hooks/useQueries.ts": "React Query hooks for fetching messages (with 2s polling) and posting new messages via the backend actor.",
+  "frontend/src/components/ChatView.tsx": "Main chat layout with header (logo, app title, current user name), scrollable message feed, and message input footer; manages display name state via localStorage.",
+  "frontend/src/components/MessageFeed.tsx": "Scrollable feed of chat bubbles with auto-scroll to latest; distinguishes own messages (right-aligned, coral) from others (left-aligned, card); shows avatars with initials and color-coded by name.",
+  "frontend/src/components/MessageInput.tsx": "Controlled text input with send button; submits on Enter or click, shows spinner during mutation, clears on success.",
+  "frontend/src/components/DisplayNamePrompt.tsx": "Full-screen onboarding card prompting the user to enter a display name before entering the chat, with validation and branding.",
+  "frontend/src/index.css": "Global styles with warm coral/amber OKLCH color tokens for light and dark modes, Inter font import, and base body styles.",
+  "frontend/tailwind.config.js": "Extended Tailwind config with Inter font family, coral/amber/teal/violet/rose/sky color tokens, expanded border-radius scale, and shadow utilities."
+}

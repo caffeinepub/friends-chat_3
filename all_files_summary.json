@@ -1,0 +1,19 @@
+{
+  "backend/main.mo": "Motoko actor defining a simple chat backend with a mutable message list, supporting postMessage (stores sender, content, timestamp) and getMessages (returns all messages as an array).",
+  "feature_evidence.json": "Maps two product features—chat UI with display name gating, and warm coral/amber visual theme—to their implementing source files, components, and test IDs.",
+  "frontend-file-summaries.txt": "JSON dictionary providing one-line descriptions of each frontend source file for build planning reference.",
+  "frontend/index.css": "Defines Tailwind base styles and CSS custom properties (OKLCH color tokens) for light and dark themes including background, foreground, card, primary, and chart colors.",
+  "frontend/index.html": "Minimal HTML entry point titled 'Friends Chat App' that mounts the React app at #root via main.tsx.",
+  "frontend/src/App.tsx": "Root React component that simply renders the ChatView component as the entire application.",
+  "frontend/src/components/ChatView.tsx": "Main chat page component managing display name state (persisted in localStorage), rendering the header, MessageFeed, MessageInput, and a branded footer; shows DisplayNamePrompt if no name is set.",
+  "frontend/src/components/DisplayNamePrompt.tsx": "Full-screen onboarding form that validates and collects a display name (2–30 chars) before allowing the user to enter the chat.",
+  "frontend/src/components/MessageFeed.tsx": "Scrollable chat bubble feed that auto-scrolls to the latest message, shows loading skeletons, distinguishes own vs. others' messages with alignment and color, and displays color-coded initials avatars.",
+  "frontend/src/components/MessageInput.tsx": "Controlled message input with a send button that submits on Enter or click, shows a spinner while posting, and clears on success.",
+  "frontend/src/hooks/useActor.ts": "React Query hook that creates and caches an authenticated or anonymous ICP backend actor based on the current Internet Identity, invalidating dependent queries when the actor changes.",
+  "frontend/src/hooks/useInternetIdentity.ts": "Provides a React context and hook for Internet Identity authentication, managing login state, identity persistence, and AuthClient creation with configurable options.",
+  "frontend/src/hooks/useQueries.ts": "Defines TanStack Query hooks for fetching messages (`useMessages`) and posting new messages (`usePostMessage`) via the backend actor.",
+  "frontend/src/index.css": "Global CSS file that sets up Tailwind base/components/utilities and defines OKLCH-based CSS custom properties for a warm coral/amber light and dark color theme.",
+  "frontend/src/main.tsx": "React app entry point that mounts the root component wrapped with `QueryClientProvider` and `InternetIdentityProvider`.",
+  "frontend/tailwind.config.js": "Tailwind CSS configuration extending the default theme with OKLCH color tokens, custom border radii, box shadows, Inter font, and animation keyframes, plus typography and container-query plugins.",
+  "project_state.json": "Tracks project metadata, existing features, and pending feature requests for the Friends Chat App, including architectural notes and build state versioning."
+}

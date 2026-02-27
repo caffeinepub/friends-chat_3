@@ -1,0 +1,77 @@
+{
+  "kind": "build_request",
+  "title": "Friends Chat App",
+  "projectName": "FriendChat",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Create a backend actor that stores chat messages with a sender name, message text, and timestamp. Provide functions to post a new message and retrieve all messages in chronological order.",
+      "target": "backend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Create a app for me in my friends to chat with"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Messages are persisted in stable storage across upgrades",
+        "postMessage(sender: Text, text: Text) appends a new message with a timestamp",
+        "getMessages() returns all messages sorted oldest-first"
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Build a chat UI that displays a scrollable feed of messages showing the sender name, message text, and time sent. Include a text input and a send button at the bottom to submit new messages. The user must enter a display name before chatting.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ],
+        "quotes": [
+          "Create a app for me in my friends to chat with"
+        ]
+      },
+      "acceptanceCriteria": [
+        "New users are prompted to set a display name before they can send messages",
+        "All messages from all users are shown in the feed",
+        "New messages submitted via the input appear in the feed without a full page reload",
+        "The message feed auto-scrolls to the latest message",
+        "Pressing Enter or clicking Send submits the message"
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "text": "Apply a warm, modern visual theme with a bold color palette (e.g., coral/amber tones), clean card-based layout, rounded chat bubbles, and friendly sans-serif typography. The design should feel social, approachable, and consistent throughout the app.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-1"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Color palette is consistent across all views",
+        "Chat bubbles are visually distinct between the local user and others",
+        "Typography and spacing feel comfortable and readable",
+        "The layout is responsive and usable on both desktop and mobile screens"
+      ]
+    }
+  ],
+  "constraints": [
+    "Real-time WebSocket-based updates are not supported; use polling via React Query to refresh messages periodically"
+  ],
+  "nonGoals": [
+    "User authentication or login via Internet Identity",
+    "Private/direct messaging between specific users",
+    "Message deletion or editing",
+    "File or image sharing in chat"
+  ],
+  "imageRequirements": {
+    "required": [
+      "Friendly chat app logo mark — two overlapping speech bubbles in warm coral and amber tones (chat-logo.dim_256x256.png)"
+    ],
+    "edits": []
+  }
+}

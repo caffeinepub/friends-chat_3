@@ -1,0 +1,92 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Friends Chat App Frontend Implementation",
+  "requirements": [
+    {
+      "id": "REQ-2",
+      "summary": "Build a chat UI with scrollable message feed, text input, send button, and display name prompt",
+      "acceptanceCriteria": [
+        "New users are prompted to set a display name before they can send messages",
+        "All messages from all users are shown in the feed",
+        "New messages submitted via the input appear in the feed without a full page reload",
+        "The message feed auto-scrolls to the latest message",
+        "Pressing Enter or clicking Send submits the message"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/App.tsx",
+          "operation": "modify",
+          "description": "Replace the default app content with the main chat interface. Render the ChatView component as the primary view and remove any unused boilerplate."
+        },
+        {
+          "path": "frontend/src/components/ChatView.tsx",
+          "operation": "create",
+          "description": "Create the main chat view component. Use React Query to fetch messages from backend.getMessages() with polling enabled (refetchInterval). Display a prompt to set a display name if not yet set (stored in local state). Once a name is provided, show the message feed and input area. Include auto-scroll logic to keep the latest message visible."
+        },
+        {
+          "path": "frontend/src/components/MessageFeed.tsx",
+          "operation": "create",
+          "description": "Create a scrollable message feed component that accepts an array of messages (sender, content, timestamp) and renders each message in a card or bubble. Use a ref to auto-scroll to the bottom when new messages arrive."
+        },
+        {
+          "path": "frontend/src/components/MessageInput.tsx",
+          "operation": "create",
+          "description": "Create a message input component with a text input field and a send button. Use shadcn/ui Input and Button components. On form submit or button click, call backend.postMessage(sender, content) via React Query mutation, then clear the input. Support Enter key to submit."
+        },
+        {
+          "path": "frontend/src/components/DisplayNamePrompt.tsx",
+          "operation": "create",
+          "description": "Create a modal or card-based prompt asking the user to enter a display name before chatting. Use shadcn/ui Input and Button components. On submit, store the name in local state and allow the user to proceed to the chat feed."
+        },
+        {
+          "path": "frontend/src/hooks/useMessages.ts",
+          "operation": "create",
+          "description": "Create a custom hook that uses React Query to fetch messages via backend.getMessages() with polling enabled (e.g., refetchInterval: 2000). Return the messages array and query state (isLoading, error)."
+        },
+        {
+          "path": "frontend/src/hooks/usePostMessage.ts",
+          "operation": "create",
+          "description": "Create a custom hook that uses React Query mutation to post a new message via backend.postMessage(sender, content). On success, invalidate the messages query to trigger a refetch."
+        }
+      ]
+    },
+    {
+      "id": "REQ-3",
+      "summary": "Apply a warm, modern visual theme with coral/amber tones, card-based layout, rounded chat bubbles, and friendly typography",
+      "acceptanceCriteria": [
+        "Color palette is consistent across all views",
+        "Chat bubbles are visually distinct between the local user and others",
+        "Typography and spacing feel comfortable and readable",
+        "The layout is responsive and usable on both desktop and mobile screens"
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/index.css",
+          "operation": "modify",
+          "description": "Define CSS custom properties (variables) for the warm coral/amber color palette (primary, secondary, background, text colors). Update the global body and root styles to apply the theme colors and friendly sans-serif typography (e.g., system-ui, sans-serif). Ensure the layout is clean and readable."
+        },
+        {
+          "path": "frontend/tailwind.config.js",
+          "operation": "modify",
+          "description": "Extend the Tailwind theme with custom colors matching the warm coral/amber palette (e.g., coral-500, amber-500). Add rounded border radius utilities (e.g., rounded-2xl) for chat bubbles. Configure font families to use friendly sans-serif options."
+        },
+        {
+          "path": "frontend/src/components/MessageFeed.tsx",
+          "operation": "modify",
+          "description": "Apply card-based layout and rounded chat bubble styles using Tailwind classes. Visually distinguish the local user's messages (e.g., align right, use primary coral tone) from other users' messages (e.g., align left, use secondary amber tone). Ensure responsive spacing and readability on mobile and desktop."
+        },
+        {
+          "path": "frontend/public/assets/generated/chat-logo.dim_256x256.png",
+          "operation": "create",
+          "description": "Wire the generated chat app logo (friendly two overlapping speech bubbles in warm coral and amber tones) into the UI. Reference this image in the ChatView or app header as a branding element using the workspace file path frontend/public/assets/generated/chat-logo.dim_256x256.png."
+        },
+        {
+          "path": "frontend/src/components/ChatView.tsx",
+          "operation": "modify",
+          "description": "Add a header section at the top of the chat view that displays the chat-logo.dim_256x256.png image and the app title. Use the exact workspace path frontend/public/assets/generated/chat-logo.dim_256x256.png in the img src attribute. Apply consistent warm theme colors and spacing."
+        }
+      ]
+    }
+  ]
+}
