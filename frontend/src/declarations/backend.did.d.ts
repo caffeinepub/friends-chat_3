@@ -10,15 +10,57 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
+export interface FriendRequest {
+  'to' : Principal,
+  'from' : Principal,
+  'timestamp' : Time,
+}
 export interface Message {
   'content' : string,
   'sender' : string,
   'timestamp' : Time,
 }
+export interface MessageThread {
+  'participants' : Array<Principal>,
+  'messages' : Array<Message>,
+}
 export type Time = bigint;
+export interface UserProfile {
+  'principal' : Principal,
+  'username' : string,
+  'displayName' : string,
+  'isOnline' : boolean,
+  'lastOnline' : Time,
+  'friends' : Array<Principal>,
+}
+export type UserRole = { 'admin' : null } |
+  { 'user' : null } |
+  { 'guest' : null };
 export interface _SERVICE {
+  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'acceptFriendRequest' : ActorMethod<[Principal], undefined>,
+  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'createUserProfile' : ActorMethod<[string, string], undefined>,
+  'declineFriendRequest' : ActorMethod<[Principal], undefined>,
+  'getAllOnlineUsers' : ActorMethod<[], Array<UserProfile>>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
+  'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getFriendsList' : ActorMethod<[], Array<Principal>>,
   'getMessages' : ActorMethod<[], Array<Message>>,
+  'getOnlineFriends' : ActorMethod<[], Array<Principal>>,
+  'getPendingFriendRequests' : ActorMethod<[], Array<FriendRequest>>,
+  'getPrivateThread' : ActorMethod<[Principal], [] | [MessageThread]>,
+  'getThreadMessages' : ActorMethod<[Principal], Array<Message>>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'isCallerAdmin' : ActorMethod<[], boolean>,
   'postMessage' : ActorMethod<[string, string], undefined>,
+  'saveCallerUserProfile' : ActorMethod<[string, string], undefined>,
+  'searchUsersByUsername' : ActorMethod<[string], Array<UserProfile>>,
+  'sendFriendRequest' : ActorMethod<[Principal], undefined>,
+  'sendMessageToThread' : ActorMethod<[Principal, string], undefined>,
+  'sendPrivateMessage' : ActorMethod<[Principal, string], undefined>,
+  'startPrivateThread' : ActorMethod<[Principal], undefined>,
+  'updateOnlineStatus' : ActorMethod<[boolean], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

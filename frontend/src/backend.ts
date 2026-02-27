@@ -89,18 +89,189 @@ export class ExternalBlob {
         return this;
     }
 }
+export interface MessageThread {
+    participants: Array<Principal>;
+    messages: Array<Message>;
+}
 export interface Message {
     content: string;
     sender: string;
     timestamp: Time;
 }
 export type Time = bigint;
-export interface backendInterface {
-    getMessages(): Promise<Array<Message>>;
-    postMessage(sender: string, content: string): Promise<void>;
+export interface FriendRequest {
+    to: Principal;
+    from: Principal;
+    timestamp: Time;
 }
+export interface UserProfile {
+    principal: Principal;
+    username: string;
+    displayName: string;
+    isOnline: boolean;
+    lastOnline: Time;
+    friends: Array<Principal>;
+}
+export enum UserRole {
+    admin = "admin",
+    user = "user",
+    guest = "guest"
+}
+export interface backendInterface {
+    _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
+    acceptFriendRequest(fromUser: Principal): Promise<void>;
+    assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    createUserProfile(username: string, displayName: string): Promise<void>;
+    declineFriendRequest(fromUser: Principal): Promise<void>;
+    getAllOnlineUsers(): Promise<Array<UserProfile>>;
+    getCallerUserProfile(): Promise<UserProfile | null>;
+    getCallerUserRole(): Promise<UserRole>;
+    getFriendsList(): Promise<Array<Principal>>;
+    getMessages(): Promise<Array<Message>>;
+    getOnlineFriends(): Promise<Array<Principal>>;
+    getPendingFriendRequests(): Promise<Array<FriendRequest>>;
+    getPrivateThread(threadId: Principal): Promise<MessageThread | null>;
+    getThreadMessages(threadId: Principal): Promise<Array<Message>>;
+    getUserProfile(user: Principal): Promise<UserProfile | null>;
+    isCallerAdmin(): Promise<boolean>;
+    postMessage(sender: string, content: string): Promise<void>;
+    saveCallerUserProfile(username: string, displayName: string): Promise<void>;
+    searchUsersByUsername(username: string): Promise<Array<UserProfile>>;
+    sendFriendRequest(toUser: Principal): Promise<void>;
+    sendMessageToThread(threadId: Principal, content: string): Promise<void>;
+    sendPrivateMessage(threadId: Principal, content: string): Promise<void>;
+    startPrivateThread(recipient: Principal): Promise<void>;
+    updateOnlineStatus(isOnline: boolean): Promise<void>;
+}
+import type { MessageThread as _MessageThread, UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
+    async _initializeAccessControlWithSecret(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._initializeAccessControlWithSecret(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._initializeAccessControlWithSecret(arg0);
+            return result;
+        }
+    }
+    async acceptFriendRequest(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.acceptFriendRequest(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.acceptFriendRequest(arg0);
+            return result;
+        }
+    }
+    async assignCallerUserRole(arg0: Principal, arg1: UserRole): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n1(this._uploadFile, this._downloadFile, arg1));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n1(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async createUserProfile(arg0: string, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.createUserProfile(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.createUserProfile(arg0, arg1);
+            return result;
+        }
+    }
+    async declineFriendRequest(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.declineFriendRequest(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.declineFriendRequest(arg0);
+            return result;
+        }
+    }
+    async getAllOnlineUsers(): Promise<Array<UserProfile>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getAllOnlineUsers();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getAllOnlineUsers();
+            return result;
+        }
+    }
+    async getCallerUserProfile(): Promise<UserProfile | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCallerUserProfile();
+                return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCallerUserProfile();
+            return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCallerUserRole(): Promise<UserRole> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCallerUserRole();
+                return from_candid_UserRole_n4(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCallerUserRole();
+            return from_candid_UserRole_n4(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getFriendsList(): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getFriendsList();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getFriendsList();
+            return result;
+        }
+    }
     async getMessages(): Promise<Array<Message>> {
         if (this.processError) {
             try {
@@ -112,6 +283,90 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getMessages();
+            return result;
+        }
+    }
+    async getOnlineFriends(): Promise<Array<Principal>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getOnlineFriends();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getOnlineFriends();
+            return result;
+        }
+    }
+    async getPendingFriendRequests(): Promise<Array<FriendRequest>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPendingFriendRequests();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPendingFriendRequests();
+            return result;
+        }
+    }
+    async getPrivateThread(arg0: Principal): Promise<MessageThread | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPrivateThread(arg0);
+                return from_candid_opt_n6(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPrivateThread(arg0);
+            return from_candid_opt_n6(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getThreadMessages(arg0: Principal): Promise<Array<Message>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getThreadMessages(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getThreadMessages(arg0);
+            return result;
+        }
+    }
+    async getUserProfile(arg0: Principal): Promise<UserProfile | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getUserProfile(arg0);
+                return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getUserProfile(arg0);
+            return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async isCallerAdmin(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.isCallerAdmin();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.isCallerAdmin();
             return result;
         }
     }
@@ -129,6 +384,140 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async saveCallerUserProfile(arg0: string, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.saveCallerUserProfile(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.saveCallerUserProfile(arg0, arg1);
+            return result;
+        }
+    }
+    async searchUsersByUsername(arg0: string): Promise<Array<UserProfile>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.searchUsersByUsername(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.searchUsersByUsername(arg0);
+            return result;
+        }
+    }
+    async sendFriendRequest(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sendFriendRequest(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sendFriendRequest(arg0);
+            return result;
+        }
+    }
+    async sendMessageToThread(arg0: Principal, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sendMessageToThread(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sendMessageToThread(arg0, arg1);
+            return result;
+        }
+    }
+    async sendPrivateMessage(arg0: Principal, arg1: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.sendPrivateMessage(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.sendPrivateMessage(arg0, arg1);
+            return result;
+        }
+    }
+    async startPrivateThread(arg0: Principal): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.startPrivateThread(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.startPrivateThread(arg0);
+            return result;
+        }
+    }
+    async updateOnlineStatus(arg0: boolean): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.updateOnlineStatus(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.updateOnlineStatus(arg0);
+            return result;
+        }
+    }
+}
+function from_candid_UserRole_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
+    return from_candid_variant_n5(_uploadFile, _downloadFile, value);
+}
+function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_MessageThread]): MessageThread | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    admin: null;
+} | {
+    user: null;
+} | {
+    guest: null;
+}): UserRole {
+    return "admin" in value ? UserRole.admin : "user" in value ? UserRole.user : "guest" in value ? UserRole.guest : value;
+}
+function to_candid_UserRole_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
+    return to_candid_variant_n2(_uploadFile, _downloadFile, value);
+}
+function to_candid_variant_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): {
+    admin: null;
+} | {
+    user: null;
+} | {
+    guest: null;
+} {
+    return value == UserRole.admin ? {
+        admin: null
+    } : value == UserRole.user ? {
+        user: null
+    } : value == UserRole.guest ? {
+        guest: null
+    } : value;
 }
 export interface CreateActorOptions {
     agent?: Agent;

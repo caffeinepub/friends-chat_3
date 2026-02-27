@@ -1,90 +1,159 @@
 {
   "kind": "implementation_plan",
   "version": "1.0",
-  "title": "Friends Chat App Frontend Implementation",
+  "title": "Fix app bugs reported after Version 5 deployment",
   "requirements": [
     {
-      "id": "REQ-2",
-      "summary": "Build a chat UI with scrollable message feed, text input, send button, and display name prompt",
+      "id": "REQ-9",
+      "summary": "Audit and fix bugs in the public chat message feed: ensure messages load correctly, sending a new message works without errors, and the message feed auto-scrolls to the latest message after posting.",
       "acceptanceCriteria": [
-        "New users are prompted to set a display name before they can send messages",
-        "All messages from all users are shown in the feed",
-        "New messages submitted via the input appear in the feed without a full page reload",
-        "The message feed auto-scrolls to the latest message",
-        "Pressing Enter or clicking Send submits the message"
+        "Public chat messages load and display in chronological order on page load.",
+        "Sending a new message via the MessageInput form posts successfully and appears in the feed.",
+        "The feed auto-scrolls to the newest message after a message is sent or received.",
+        "No console errors are thrown during normal chat usage."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/App.tsx",
-          "operation": "modify",
-          "description": "Replace the default app content with the main chat interface. Render the ChatView component as the primary view and remove any unused boilerplate."
-        },
-        {
-          "path": "frontend/src/components/ChatView.tsx",
-          "operation": "create",
-          "description": "Create the main chat view component. Use React Query to fetch messages from backend.getMessages() with polling enabled (refetchInterval). Display a prompt to set a display name if not yet set (stored in local state). Once a name is provided, show the message feed and input area. Include auto-scroll logic to keep the latest message visible."
-        },
-        {
           "path": "frontend/src/components/MessageFeed.tsx",
-          "operation": "create",
-          "description": "Create a scrollable message feed component that accepts an array of messages (sender, content, timestamp) and renders each message in a card or bubble. Use a ref to auto-scroll to the bottom when new messages arrive."
+          "operation": "modify",
+          "description": "Fix message loading and auto-scroll behavior: ensure messages render in chronological order, verify the scrollToBottom ref callback triggers correctly after new messages arrive, fix any race conditions in the useEffect dependencies, and ensure the scroll container has proper overflow and height constraints."
         },
         {
           "path": "frontend/src/components/MessageInput.tsx",
-          "operation": "create",
-          "description": "Create a message input component with a text input field and a send button. Use shadcn/ui Input and Button components. On form submit or button click, call backend.postMessage(sender, content) via React Query mutation, then clear the input. Support Enter key to submit."
+          "operation": "modify",
+          "description": "Fix message submission: verify the form onSubmit handler calls the usePostMessage mutation correctly, ensure input is cleared only after successful submission, add proper error handling for failed posts, and confirm the loading state prevents duplicate submissions."
         },
         {
-          "path": "frontend/src/components/DisplayNamePrompt.tsx",
-          "operation": "create",
-          "description": "Create a modal or card-based prompt asking the user to enter a display name before chatting. Use shadcn/ui Input and Button components. On submit, store the name in local state and allow the user to proceed to the chat feed."
-        },
-        {
-          "path": "frontend/src/hooks/useMessages.ts",
-          "operation": "create",
-          "description": "Create a custom hook that uses React Query to fetch messages via backend.getMessages() with polling enabled (e.g., refetchInterval: 2000). Return the messages array and query state (isLoading, error)."
-        },
-        {
-          "path": "frontend/src/hooks/usePostMessage.ts",
-          "operation": "create",
-          "description": "Create a custom hook that uses React Query mutation to post a new message via backend.postMessage(sender, content). On success, invalidate the messages query to trigger a refetch."
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Fix the usePostMessage mutation: ensure it invalidates the 'messages' query key after a successful post to trigger a refetch, verify the mutation calls actor.postMessage with correct parameters (sender display name and content), and add error logging for debugging."
         }
       ]
     },
     {
-      "id": "REQ-3",
-      "summary": "Apply a warm, modern visual theme with coral/amber tones, card-based layout, rounded chat bubbles, and friendly typography",
+      "id": "REQ-10",
+      "summary": "Audit and fix bugs in the Friends panel: user search by username returns correct results, sending a friend request succeeds, incoming friend requests can be accepted or declined, and the friend list displays with accurate online/offline status indicators.",
       "acceptanceCriteria": [
-        "Color palette is consistent across all views",
-        "Chat bubbles are visually distinct between the local user and others",
-        "Typography and spacing feel comfortable and readable",
-        "The layout is responsive and usable on both desktop and mobile screens"
+        "Searching for a username returns matching users or an empty state message.",
+        "Sending a friend request completes without error and reflects in the recipient's incoming requests.",
+        "Accepting a friend request moves the user to the friend list.",
+        "Declining a friend request removes it from the incoming list.",
+        "Online/offline status indicators reflect each friend's lastOnline timestamp correctly."
       ],
       "file_operations": [
         {
-          "path": "frontend/src/index.css",
+          "path": "frontend/src/components/FriendsPanel.tsx",
           "operation": "modify",
-          "description": "Define CSS custom properties (variables) for the warm coral/amber color palette (primary, secondary, background, text colors). Update the global body and root styles to apply the theme colors and friendly sans-serif typography (e.g., system-ui, sans-serif). Ensure the layout is clean and readable."
+          "description": "Fix user search and friend request flow: verify the search input correctly triggers the useSearchUsers query with debouncing, ensure the useSendFriendRequest mutation invalidates both 'pendingFriendRequests' and 'searchUsers' queries after success, fix the decline handler to call the correct backend method and invalidate queries, and add proper empty state messaging for zero search results."
         },
         {
-          "path": "frontend/tailwind.config.js",
+          "path": "frontend/src/components/FriendListItem.tsx",
           "operation": "modify",
-          "description": "Extend the Tailwind theme with custom colors matching the warm coral/amber palette (e.g., coral-500, amber-500). Add rounded border radius utilities (e.g., rounded-2xl) for chat bubbles. Configure font families to use friendly sans-serif options."
+          "description": "Fix online/offline status indicator: verify the isOnline calculation correctly compares profile.lastOnline against the current timestamp with an appropriate threshold (e.g., 5 minutes), ensure the status dot color reflects the correct state, and confirm the profile prop is passed and not null before accessing lastOnline."
         },
         {
-          "path": "frontend/src/components/MessageFeed.tsx",
+          "path": "frontend/src/components/FriendRequestItem.tsx",
           "operation": "modify",
-          "description": "Apply card-based layout and rounded chat bubble styles using Tailwind classes. Visually distinguish the local user's messages (e.g., align right, use primary coral tone) from other users' messages (e.g., align left, use secondary amber tone). Ensure responsive spacing and readability on mobile and desktop."
+          "description": "Fix friend request acceptance: ensure the useAcceptFriendRequest mutation invalidates 'pendingFriendRequests', 'friendsList', and 'userProfile' queries after success, add error handling for failed acceptance, and verify the fromUser Principal is passed correctly to the mutation."
         },
         {
-          "path": "frontend/public/assets/generated/chat-logo.dim_256x256.png",
-          "operation": "create",
-          "description": "Wire the generated chat app logo (friendly two overlapping speech bubbles in warm coral and amber tones) into the UI. Reference this image in the ChatView or app header as a branding element using the workspace file path frontend/public/assets/generated/chat-logo.dim_256x256.png."
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Fix friend-related mutations and queries: ensure useSendFriendRequest, useAcceptFriendRequest, and useDeclineFriendRequest all invalidate the correct query keys after success, verify useSearchUsers correctly calls actor.searchUsersByUsername, and confirm useFriendsList and usePendingFriendRequests return data in the expected format."
+        }
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "summary": "Audit and fix bugs in the private chat view: opening a private chat with a friend loads the correct message thread, sending messages in a private thread works, and the view auto-scrolls to the latest message.",
+      "acceptanceCriteria": [
+        "Clicking a friend in the Friends panel opens the correct private chat thread.",
+        "Private chat messages load and display in chronological order.",
+        "Sending a message in a private thread posts successfully and appears in the thread.",
+        "The private chat view auto-scrolls to the newest message after sending or receiving."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/PrivateChatView.tsx",
+          "operation": "modify",
+          "description": "Fix private chat thread loading and message sending: verify usePrivateThread correctly fetches the thread for the selected friend's Principal, ensure useSendPrivateMessage invalidates the thread query after success, fix the auto-scroll logic to trigger after new messages load, confirm the message feed renders messages in chronological order, and add error handling for failed thread creation or message sends."
         },
         {
           "path": "frontend/src/components/ChatView.tsx",
           "operation": "modify",
-          "description": "Add a header section at the top of the chat view that displays the chat-logo.dim_256x256.png image and the app title. Use the exact workspace path frontend/public/assets/generated/chat-logo.dim_256x256.png in the img src attribute. Apply consistent warm theme colors and spacing."
+          "description": "Fix friend selection and private chat navigation: ensure the onSelectFriend callback correctly sets the selectedFriend state with the friend's Principal, verify the PrivateChatView receives the correct friend prop, and confirm the back button properly clears selectedFriend to return to the public chat view."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Fix private thread queries and mutations: ensure usePrivateThread calls actor.getPrivateThread or actor.getThreadMessages with the correct Principal parameter, verify useSendPrivateMessage calls actor.sendPrivateMessage or actor.sendMessageToThread with threadId and content, and confirm both invalidate the correct query keys after mutation success."
+        }
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "summary": "Audit and fix bugs in the video call modal: the video call button in both the Friends panel and the Private Chat view opens the VideoCallModal correctly, the local camera stream initialises without errors, mute/camera toggle controls function as expected, and ending the call properly cleans up the stream and closes the modal.",
+      "acceptanceCriteria": [
+        "Clicking the video call button opens the VideoCallModal in a 'Calling…' state.",
+        "The local camera feed appears in the picture-in-picture area of the modal.",
+        "The mute button toggles the microphone track on/off without errors.",
+        "The camera toggle button turns the video track on/off without errors.",
+        "Clicking 'End Call' stops all media tracks, clears the stream, and closes the modal.",
+        "Pressing Escape also ends the call and closes the modal.",
+        "No unhandled promise rejections or console errors occur during the call lifecycle."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/VideoCallModal.tsx",
+          "operation": "modify",
+          "description": "Fix video call modal and camera stream handling: verify the modal renders when isCallActive is true, ensure the local video element receives the camera stream from useVideoCall and plays inline, fix the mute and camera toggle buttons to call the correct hook methods, confirm the end call button calls endCall and closes the modal, add Escape key listener to end the call, and add error boundaries or try-catch blocks around media stream operations to prevent unhandled promise rejections. Use the camera component to support camera stream initialization if needed."
+        },
+        {
+          "path": "frontend/src/hooks/useVideoCall.ts",
+          "operation": "modify",
+          "description": "Fix video call hook logic: ensure startCall correctly initializes the MediaStream with audio and video tracks, verify toggleMute and toggleCamera modify the stream tracks without errors, confirm endCall stops all tracks and clears the stream, add proper cleanup in the useEffect return callback, and wrap all async media operations in try-catch with error logging."
+        },
+        {
+          "path": "frontend/src/components/FriendsPanel.tsx",
+          "operation": "modify",
+          "description": "Fix video call button in Friends panel: ensure the video call button (if present) correctly triggers the onStartCall callback with the selected friend, verify the button is not disabled inappropriately, and confirm it opens the VideoCallModal."
+        },
+        {
+          "path": "frontend/src/components/PrivateChatView.tsx",
+          "operation": "modify",
+          "description": "Fix video call button in Private Chat view: ensure the video call button correctly triggers the onStartCall callback with the current friend, verify the button is wired to the ChatView's video call state, and confirm it opens the VideoCallModal."
+        }
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "summary": "Audit and fix bugs in the user profile setup flow: the DisplayNamePrompt and ProfileSetupModal correctly create or retrieve a user profile on first launch, and returning users are not re-prompted unnecessarily.",
+      "acceptanceCriteria": [
+        "A new user is prompted to enter a display name and username exactly once.",
+        "After profile creation, the user enters the main chat view without being re-prompted.",
+        "A returning user is not shown the profile setup modal on subsequent visits.",
+        "Profile data (username, display name) is persisted and retrieved correctly from the backend."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/ChatView.tsx",
+          "operation": "modify",
+          "description": "Fix profile setup prompt logic: ensure the component uses useGetCallerUserProfile with proper loading and fetched states, verify showProfileSetup condition is isAuthenticated && !profileLoading && isFetched && userProfile === null to prevent flash of profile modal, confirm the DisplayNamePrompt and ProfileSetupModal are conditionally rendered only when showProfileSetup is true, and ensure after profile creation the user is not re-prompted."
+        },
+        {
+          "path": "frontend/src/components/ProfileSetupModal.tsx",
+          "operation": "modify",
+          "description": "Fix profile creation mutation: verify the useCreateUserProfile mutation correctly calls actor.createUserProfile or actor.saveCallerUserProfile with username and displayName, ensure the mutation invalidates the 'currentUserProfile' query key after success to trigger a refetch, add error handling for duplicate usernames or failed creation, and confirm the modal closes after successful profile creation."
+        },
+        {
+          "path": "frontend/src/components/DisplayNamePrompt.tsx",
+          "operation": "modify",
+          "description": "Fix display name prompt submission: verify the form correctly submits the display name to create a profile (potentially calling a simplified profile creation), ensure the prompt only appears once for new users, and confirm it does not reappear after the profile is created."
+        },
+        {
+          "path": "frontend/src/hooks/useQueries.ts",
+          "operation": "modify",
+          "description": "Fix useGetCallerUserProfile query: ensure the query correctly calls actor.getCallerUserProfile, verify the isLoading state properly reflects actorFetching || query.isLoading, confirm isFetched is set to !!actor && query.isFetched, add retry: false to prevent refetching on failure, and ensure the query is enabled only when actor is available and not fetching. Follow the authorization component usage instructions to prevent profile setup modal flash."
         }
       ]
     }

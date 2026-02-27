@@ -1,77 +1,141 @@
 {
   "kind": "build_request",
-  "title": "Friends Chat App",
-  "projectName": "FriendChat",
-  "priority": "normal",
+  "title": "Fix app bugs reported after Version 5 deployment",
+  "projectName": "Friends Chat",
+  "priority": "high",
   "requirements": [
     {
-      "id": "REQ-1",
-      "text": "Create a backend actor that stores chat messages with a sender name, message text, and timestamp. Provide functions to post a new message and retrieve all messages in chronological order.",
+      "id": "REQ-9",
+      "text": "Audit and fix bugs in the public chat message feed: ensure messages load correctly, sending a new message works without errors, and the message feed auto-scrolls to the latest message after posting.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "The app is not working correctly. It has bugs in it that I need you to fix."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Public chat messages load and display in chronological order on page load.",
+        "Sending a new message via the MessageInput form posts successfully and appears in the feed.",
+        "The feed auto-scrolls to the newest message after a message is sent or received.",
+        "No console errors are thrown during normal chat usage."
+      ]
+    },
+    {
+      "id": "REQ-10",
+      "text": "Audit and fix bugs in the Friends panel: user search by username returns correct results, sending a friend request succeeds, incoming friend requests can be accepted or declined, and the friend list displays with accurate online/offline status indicators.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "The app is not working correctly. It has bugs in it that I need you to fix."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Searching for a username returns matching users or an empty state message.",
+        "Sending a friend request completes without error and reflects in the recipient's incoming requests.",
+        "Accepting a friend request moves the user to the friend list.",
+        "Declining a friend request removes it from the incoming list.",
+        "Online/offline status indicators reflect each friend's lastOnline timestamp correctly."
+      ]
+    },
+    {
+      "id": "REQ-11",
+      "text": "Audit and fix bugs in the private chat view: opening a private chat with a friend loads the correct message thread, sending messages in a private thread works, and the view auto-scrolls to the latest message.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "The app is not working correctly. It has bugs in it that I need you to fix."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Clicking a friend in the Friends panel opens the correct private chat thread.",
+        "Private chat messages load and display in chronological order.",
+        "Sending a message in a private thread posts successfully and appears in the thread.",
+        "The private chat view auto-scrolls to the newest message after sending or receiving."
+      ]
+    },
+    {
+      "id": "REQ-12",
+      "text": "Audit and fix bugs in the video call modal: the video call button in both the Friends panel and the Private Chat view opens the VideoCallModal correctly, the local camera stream initialises without errors, mute/camera toggle controls function as expected, and ending the call properly cleans up the stream and closes the modal.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "The app is not working correctly. It has bugs in it that I need you to fix."
+        ]
+      },
+      "acceptanceCriteria": [
+        "Clicking the video call button opens the VideoCallModal in a 'Calling…' state.",
+        "The local camera feed appears in the picture-in-picture area of the modal.",
+        "The mute button toggles the microphone track on/off without errors.",
+        "The camera toggle button turns the video track on/off without errors.",
+        "Clicking 'End Call' stops all media tracks, clears the stream, and closes the modal.",
+        "Pressing Escape also ends the call and closes the modal.",
+        "No unhandled promise rejections or console errors occur during the call lifecycle."
+      ]
+    },
+    {
+      "id": "REQ-13",
+      "text": "Audit and fix bugs in the user profile setup flow: the DisplayNamePrompt and ProfileSetupModal correctly create or retrieve a user profile on first launch, and returning users are not re-prompted unnecessarily.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "msg-6"
+        ],
+        "quotes": [
+          "The app is not working correctly. It has bugs in it that I need you to fix."
+        ]
+      },
+      "acceptanceCriteria": [
+        "A new user is prompted to enter a display name and username exactly once.",
+        "After profile creation, the user enters the main chat view without being re-prompted.",
+        "A returning user is not shown the profile setup modal on subsequent visits.",
+        "Profile data (username, display name) is persisted and retrieved correctly from the backend."
+      ]
+    },
+    {
+      "id": "REQ-14",
+      "text": "Fix any backend Motoko actor issues: ensure all public functions (postMessage, getMessages, createUserProfile, getUserProfile, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getPrivateThread, sendPrivateMessage, updateOnlineStatus) return correct results and do not trap or throw unexpected errors under normal usage.",
       "target": "backend",
       "source": {
         "messageIds": [
-          "msg-1"
+          "msg-6"
         ],
         "quotes": [
-          "Create a app for me in my friends to chat with"
+          "The app is not working correctly. It has bugs in it that I need you to fix."
         ]
       },
       "acceptanceCriteria": [
-        "Messages are persisted in stable storage across upgrades",
-        "postMessage(sender: Text, text: Text) appends a new message with a timestamp",
-        "getMessages() returns all messages sorted oldest-first"
-      ]
-    },
-    {
-      "id": "REQ-2",
-      "text": "Build a chat UI that displays a scrollable feed of messages showing the sender name, message text, and time sent. Include a text input and a send button at the bottom to submit new messages. The user must enter a display name before chatting.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ],
-        "quotes": [
-          "Create a app for me in my friends to chat with"
-        ]
-      },
-      "acceptanceCriteria": [
-        "New users are prompted to set a display name before they can send messages",
-        "All messages from all users are shown in the feed",
-        "New messages submitted via the input appear in the feed without a full page reload",
-        "The message feed auto-scrolls to the latest message",
-        "Pressing Enter or clicking Send submits the message"
-      ]
-    },
-    {
-      "id": "REQ-3",
-      "text": "Apply a warm, modern visual theme with a bold color palette (e.g., coral/amber tones), clean card-based layout, rounded chat bubbles, and friendly sans-serif typography. The design should feel social, approachable, and consistent throughout the app.",
-      "target": "frontend",
-      "source": {
-        "messageIds": [
-          "msg-1"
-        ]
-      },
-      "acceptanceCriteria": [
-        "Color palette is consistent across all views",
-        "Chat bubbles are visually distinct between the local user and others",
-        "Typography and spacing feel comfortable and readable",
-        "The layout is responsive and usable on both desktop and mobile screens"
+        "All backend query and update functions return expected result types without trapping.",
+        "Concurrent calls to postMessage do not produce duplicate or out-of-order messages.",
+        "Friend request state transitions (pending → accepted/declined) are handled atomically.",
+        "Private message threads are scoped correctly to the two participants and not visible to others.",
+        "Online status updates persist and are retrievable via getUserProfile."
       ]
     }
   ],
   "constraints": [
-    "Real-time WebSocket-based updates are not supported; use polling via React Query to refresh messages periodically"
+    "Do not change the existing data model or break backwards compatibility with stored state.",
+    "Do not modify files listed in frontend.immutablePaths.",
+    "All fixes must preserve the existing warm coral/amber visual theme."
   ],
   "nonGoals": [
-    "User authentication or login via Internet Identity",
-    "Private/direct messaging between specific users",
-    "Message deletion or editing",
-    "File or image sharing in chat"
+    "Adding new features beyond what is already implemented.",
+    "Redesigning the UI or changing the visual theme.",
+    "Adding real peer-to-peer WebRTC functionality (video call remains simulated)."
   ],
   "imageRequirements": {
-    "required": [
-      "Friendly chat app logo mark — two overlapping speech bubbles in warm coral and amber tones (chat-logo.dim_256x256.png)"
-    ],
+    "required": [],
     "edits": []
   }
 }

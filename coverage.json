@@ -1,163 +1,128 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T01:09:44.585Z",
+  "generatedAt": "2026-02-27T02:45:43.118Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
   },
   "requirements": {
-    "total": 3,
-    "implemented": 2,
+    "total": 6,
+    "implemented": 5,
     "items": [
       {
-        "id": "REQ-1",
-        "summary": "Create a backend actor that stores chat messages with a sender name, message text, and timestamp. Provide functions to post a new message and retrieve all messages in chronological order.",
+        "id": "REQ-10",
+        "summary": "Audit and fix bugs in the Friends panel: user search by username returns correct results, sending a friend request succeeds, incoming friend requests can be accepted or declined, and the friend list displays with accurate online/offline status indicators.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/FriendListItem.tsx",
+          "frontend/src/components/FriendRequestItem.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/FriendListItem.tsx",
+          "frontend/src/components/FriendRequestItem.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-11",
+        "summary": "Audit and fix bugs in the private chat view: opening a private chat with a friend loads the correct message thread, sending messages in a private thread works, and the view auto-scrolls to the latest message.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/PrivateChatView.tsx",
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/PrivateChatView.tsx",
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-12",
+        "summary": "Audit and fix bugs in the video call modal: the video call button in both the Friends panel and the Private Chat view opens the VideoCallModal correctly, the local camera stream initialises without errors, mute/camera toggle controls function as expected, and ending the call properly cleans up the stream and closes the modal.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/VideoCallModal.tsx",
+          "frontend/src/hooks/useVideoCall.ts",
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/PrivateChatView.tsx"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/VideoCallModal.tsx",
+          "frontend/src/hooks/useVideoCall.ts",
+          "frontend/src/components/FriendsPanel.tsx",
+          "frontend/src/components/PrivateChatView.tsx"
+        ]
+      },
+      {
+        "id": "REQ-13",
+        "summary": "Audit and fix bugs in the user profile setup flow: the DisplayNamePrompt and ProfileSetupModal correctly create or retrieve a user profile on first launch, and returning users are not re-prompted unnecessarily.",
+        "status": "implemented",
+        "plannedFiles": [
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/components/ProfileSetupModal.tsx",
+          "frontend/src/components/DisplayNamePrompt.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ],
+        "matchedFiles": [
+          "frontend/src/components/ChatView.tsx",
+          "frontend/src/components/ProfileSetupModal.tsx",
+          "frontend/src/components/DisplayNamePrompt.tsx",
+          "frontend/src/hooks/useQueries.ts"
+        ]
+      },
+      {
+        "id": "REQ-14",
+        "summary": "Fix any backend Motoko actor issues: ensure all public functions (postMessage, getMessages, createUserProfile, getUserProfile, sendFriendRequest, acceptFriendRequest, declineFriendRequest, getPrivateThread, sendPrivateMessage, updateOnlineStatus) return correct results and do not trap or throw unexpected errors under normal usage.",
         "status": "unknown",
         "plannedFiles": [],
         "matchedFiles": []
       },
       {
-        "id": "REQ-2",
-        "summary": "Build a chat UI that displays a scrollable feed of messages showing the sender name, message text, and time sent. Include a text input and a send button at the bottom to submit new messages. The user must enter a display name before chatting.",
+        "id": "REQ-9",
+        "summary": "Audit and fix bugs in the public chat message feed: ensure messages load correctly, sending a new message works without errors, and the message feed auto-scrolls to the latest message after posting.",
         "status": "implemented",
         "plannedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/ChatView.tsx",
           "frontend/src/components/MessageFeed.tsx",
           "frontend/src/components/MessageInput.tsx",
-          "frontend/src/components/DisplayNamePrompt.tsx",
-          "frontend/src/hooks/useMessages.ts",
-          "frontend/src/hooks/usePostMessage.ts"
+          "frontend/src/hooks/useQueries.ts"
         ],
         "matchedFiles": [
-          "frontend/src/App.tsx",
-          "frontend/src/components/ChatView.tsx",
           "frontend/src/components/MessageFeed.tsx",
           "frontend/src/components/MessageInput.tsx",
-          "frontend/src/components/DisplayNamePrompt.tsx"
-        ]
-      },
-      {
-        "id": "REQ-3",
-        "summary": "Apply a warm, modern visual theme with a bold color palette (e.g., coral/amber tones), clean card-based layout, rounded chat bubbles, and friendly sans-serif typography. The design should feel social, approachable, and consistent throughout the app.",
-        "status": "implemented",
-        "plannedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/components/MessageFeed.tsx",
-          "frontend/public/assets/generated/chat-logo.dim_256x256.png",
-          "frontend/src/components/ChatView.tsx"
-        ],
-        "matchedFiles": [
-          "frontend/src/index.css",
-          "frontend/tailwind.config.js",
-          "frontend/src/components/MessageFeed.tsx",
-          "frontend/public/assets/generated/chat-logo.dim_256x256.png",
-          "frontend/src/components/ChatView.tsx"
+          "frontend/src/hooks/useQueries.ts"
         ]
       }
     ]
   },
   "changedFiles": [
     "backend/main.mo",
+    "backend/migration.mo",
     "build-request.json",
-    "build-template/Dockerfile",
-    "build-template/LICENSE",
-    "build-template/README.md",
-    "build-template/deploy.sh",
-    "build-template/icp.yaml",
-    "build-template/package.json",
-    "build-template/pnpm-lock.yaml",
-    "build-template/pnpm-workspace.yaml",
-    "build-template/scripts/prune-unused-images.js",
-    "build-template/scripts/resize-images.js",
-    "build-template/src/backend/canister.yaml",
-    "build-template/src/backend/system-idl/aaaaa-aa.did",
-    "build-template/src/frontend/canister.yaml",
-    "build-template/src/frontend/components.json",
-    "build-template/src/frontend/env.json",
-    "build-template/src/frontend/eslint-rules/no-bigint-in-query-keys.js",
-    "build-template/src/frontend/eslint-rules/require-internet-identity-provider.js",
-    "build-template/src/frontend/eslint.config.js",
-    "build-template/src/frontend/package.json",
-    "build-template/src/frontend/postcss.config.js",
-    "build-template/src/frontend/src/components/ui/accordion.tsx",
-    "build-template/src/frontend/src/components/ui/alert-dialog.tsx",
-    "build-template/src/frontend/src/components/ui/alert.tsx",
-    "build-template/src/frontend/src/components/ui/aspect-ratio.tsx",
-    "build-template/src/frontend/src/components/ui/avatar.tsx",
-    "build-template/src/frontend/src/components/ui/badge.tsx",
-    "build-template/src/frontend/src/components/ui/breadcrumb.tsx",
-    "build-template/src/frontend/src/components/ui/button.tsx",
-    "build-template/src/frontend/src/components/ui/calendar.tsx",
-    "build-template/src/frontend/src/components/ui/card.tsx",
-    "build-template/src/frontend/src/components/ui/carousel.tsx",
-    "build-template/src/frontend/src/components/ui/chart.tsx",
-    "build-template/src/frontend/src/components/ui/checkbox.tsx",
-    "build-template/src/frontend/src/components/ui/collapsible.tsx",
-    "build-template/src/frontend/src/components/ui/command.tsx",
-    "build-template/src/frontend/src/components/ui/context-menu.tsx",
-    "build-template/src/frontend/src/components/ui/dialog.tsx",
-    "build-template/src/frontend/src/components/ui/drawer.tsx",
-    "build-template/src/frontend/src/components/ui/dropdown-menu.tsx",
-    "build-template/src/frontend/src/components/ui/form.tsx",
-    "build-template/src/frontend/src/components/ui/hover-card.tsx",
-    "build-template/src/frontend/src/components/ui/input-otp.tsx",
-    "build-template/src/frontend/src/components/ui/input.tsx",
-    "build-template/src/frontend/src/components/ui/label.tsx",
-    "build-template/src/frontend/src/components/ui/menubar.tsx",
-    "build-template/src/frontend/src/components/ui/navigation-menu.tsx",
-    "build-template/src/frontend/src/components/ui/pagination.tsx",
-    "build-template/src/frontend/src/components/ui/popover.tsx",
-    "build-template/src/frontend/src/components/ui/progress.tsx",
-    "build-template/src/frontend/src/components/ui/radio-group.tsx",
-    "build-template/src/frontend/src/components/ui/resizable.tsx",
-    "build-template/src/frontend/src/components/ui/scroll-area.tsx",
-    "build-template/src/frontend/src/components/ui/select.tsx",
-    "build-template/src/frontend/src/components/ui/separator.tsx",
-    "build-template/src/frontend/src/components/ui/sheet.tsx",
-    "build-template/src/frontend/src/components/ui/sidebar.tsx",
-    "build-template/src/frontend/src/components/ui/skeleton.tsx",
-    "build-template/src/frontend/src/components/ui/slider.tsx",
-    "build-template/src/frontend/src/components/ui/sonner.tsx",
-    "build-template/src/frontend/src/components/ui/switch.tsx",
-    "build-template/src/frontend/src/components/ui/table.tsx",
-    "build-template/src/frontend/src/components/ui/tabs.tsx",
-    "build-template/src/frontend/src/components/ui/textarea.tsx",
-    "build-template/src/frontend/src/components/ui/toggle-group.tsx",
-    "build-template/src/frontend/src/components/ui/toggle.tsx",
-    "build-template/src/frontend/src/components/ui/tooltip.tsx",
-    "build-template/src/frontend/src/hooks/use-mobile.tsx",
-    "build-template/src/frontend/src/lib/utils.ts",
-    "build-template/src/frontend/tsconfig.json",
-    "build-template/src/frontend/vite.config.js",
-    "build-template/tsconfig.json",
-    "caffeine.lock.json",
     "feature_evidence.json",
     "frontend-file-summaries.txt",
     "frontend-implementation-plan.json",
-    "frontend/index.css",
-    "frontend/index.html",
-    "frontend/public/assets/generated/chat-logo.dim_256x256.png",
-    "frontend/src/App.tsx",
     "frontend/src/backend.d.ts",
     "frontend/src/backend.ts",
     "frontend/src/components/ChatView.tsx",
     "frontend/src/components/DisplayNamePrompt.tsx",
+    "frontend/src/components/FriendListItem.tsx",
+    "frontend/src/components/FriendRequestItem.tsx",
+    "frontend/src/components/FriendsPanel.tsx",
     "frontend/src/components/MessageFeed.tsx",
     "frontend/src/components/MessageInput.tsx",
-    "frontend/src/config.ts",
+    "frontend/src/components/PrivateChatView.tsx",
+    "frontend/src/components/ProfileSetupModal.tsx",
+    "frontend/src/components/VideoCallModal.tsx",
     "frontend/src/declarations/backend.did.d.ts",
     "frontend/src/declarations/backend.did.js",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/index.css",
-    "frontend/src/main.tsx",
-    "frontend/src/ui-summary.json",
-    "frontend/src/utils/StorageClient.ts",
-    "frontend/tailwind.config.js",
+    "frontend/src/hooks/useVideoCall.ts",
     "project_state.json",
     "scratch/component-selection.json",
     "spec.md",

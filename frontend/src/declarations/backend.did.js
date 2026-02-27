@@ -8,31 +8,159 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const UserRole = IDL.Variant({
+  'admin' : IDL.Null,
+  'user' : IDL.Null,
+  'guest' : IDL.Null,
+});
 export const Time = IDL.Int;
+export const UserProfile = IDL.Record({
+  'principal' : IDL.Principal,
+  'username' : IDL.Text,
+  'displayName' : IDL.Text,
+  'isOnline' : IDL.Bool,
+  'lastOnline' : Time,
+  'friends' : IDL.Vec(IDL.Principal),
+});
 export const Message = IDL.Record({
   'content' : IDL.Text,
   'sender' : IDL.Text,
   'timestamp' : Time,
 });
+export const FriendRequest = IDL.Record({
+  'to' : IDL.Principal,
+  'from' : IDL.Principal,
+  'timestamp' : Time,
+});
+export const MessageThread = IDL.Record({
+  'participants' : IDL.Vec(IDL.Principal),
+  'messages' : IDL.Vec(Message),
+});
 
 export const idlService = IDL.Service({
+  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'acceptFriendRequest' : IDL.Func([IDL.Principal], [], []),
+  'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'createUserProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'declineFriendRequest' : IDL.Func([IDL.Principal], [], []),
+  'getAllOnlineUsers' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
+  'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getFriendsList' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
   'getMessages' : IDL.Func([], [IDL.Vec(Message)], ['query']),
+  'getOnlineFriends' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+  'getPendingFriendRequests' : IDL.Func(
+      [],
+      [IDL.Vec(FriendRequest)],
+      ['query'],
+    ),
+  'getPrivateThread' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(MessageThread)],
+      ['query'],
+    ),
+  'getThreadMessages' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(Message)],
+      ['query'],
+    ),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
+  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'postMessage' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'saveCallerUserProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'searchUsersByUsername' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(UserProfile)],
+      ['query'],
+    ),
+  'sendFriendRequest' : IDL.Func([IDL.Principal], [], []),
+  'sendMessageToThread' : IDL.Func([IDL.Principal, IDL.Text], [], []),
+  'sendPrivateMessage' : IDL.Func([IDL.Principal, IDL.Text], [], []),
+  'startPrivateThread' : IDL.Func([IDL.Principal], [], []),
+  'updateOnlineStatus' : IDL.Func([IDL.Bool], [], []),
 });
 
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
+  const UserRole = IDL.Variant({
+    'admin' : IDL.Null,
+    'user' : IDL.Null,
+    'guest' : IDL.Null,
+  });
   const Time = IDL.Int;
+  const UserProfile = IDL.Record({
+    'principal' : IDL.Principal,
+    'username' : IDL.Text,
+    'displayName' : IDL.Text,
+    'isOnline' : IDL.Bool,
+    'lastOnline' : Time,
+    'friends' : IDL.Vec(IDL.Principal),
+  });
   const Message = IDL.Record({
     'content' : IDL.Text,
     'sender' : IDL.Text,
     'timestamp' : Time,
   });
+  const FriendRequest = IDL.Record({
+    'to' : IDL.Principal,
+    'from' : IDL.Principal,
+    'timestamp' : Time,
+  });
+  const MessageThread = IDL.Record({
+    'participants' : IDL.Vec(IDL.Principal),
+    'messages' : IDL.Vec(Message),
+  });
   
   return IDL.Service({
+    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'acceptFriendRequest' : IDL.Func([IDL.Principal], [], []),
+    'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'createUserProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'declineFriendRequest' : IDL.Func([IDL.Principal], [], []),
+    'getAllOnlineUsers' : IDL.Func([], [IDL.Vec(UserProfile)], ['query']),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
+    'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getFriendsList' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
     'getMessages' : IDL.Func([], [IDL.Vec(Message)], ['query']),
+    'getOnlineFriends' : IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+    'getPendingFriendRequests' : IDL.Func(
+        [],
+        [IDL.Vec(FriendRequest)],
+        ['query'],
+      ),
+    'getPrivateThread' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(MessageThread)],
+        ['query'],
+      ),
+    'getThreadMessages' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(Message)],
+        ['query'],
+      ),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
+    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'postMessage' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'saveCallerUserProfile' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'searchUsersByUsername' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(UserProfile)],
+        ['query'],
+      ),
+    'sendFriendRequest' : IDL.Func([IDL.Principal], [], []),
+    'sendMessageToThread' : IDL.Func([IDL.Principal, IDL.Text], [], []),
+    'sendPrivateMessage' : IDL.Func([IDL.Principal, IDL.Text], [], []),
+    'startPrivateThread' : IDL.Func([IDL.Principal], [], []),
+    'updateOnlineStatus' : IDL.Func([IDL.Bool], [], []),
   });
 };
 

@@ -4,32 +4,43 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-interface DisplayNamePromptProps {
+interface ProfileSetupModalProps {
   onComplete: () => void;
 }
 
-export default function DisplayNamePrompt({ onComplete }: DisplayNamePromptProps) {
+export default function ProfileSetupModal({ onComplete }: ProfileSetupModalProps) {
+  const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
+
   const createProfile = useCreateUserProfile();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const trimmed = displayName.trim();
-    if (!trimmed || trimmed.length < 2) {
+
+    const trimmedUsername = username.trim().toLowerCase().replace(/\s+/g, '_');
+    const trimmedDisplayName = displayName.trim();
+
+    if (!trimmedUsername || trimmedUsername.length < 3) {
+      setError('Username must be at least 3 characters.');
+      return;
+    }
+    if (!trimmedDisplayName || trimmedDisplayName.length < 2) {
       setError('Display name must be at least 2 characters.');
       return;
     }
-    // Generate a simple username from display name
-    const username = trimmed.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+
     try {
-      await createProfile.mutateAsync({ username, displayName: trimmed });
+      await createProfile.mutateAsync({
+        username: trimmedUsername,
+        displayName: trimmedDisplayName,
+      });
       onComplete();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       if (message.includes('already exists')) {
-        setError('Profile already exists.');
+        setError('Username already taken. Please choose another.');
       } else {
         setError('Failed to create profile. Please try again.');
       }
@@ -45,11 +56,12 @@ export default function DisplayNamePrompt({ onComplete }: DisplayNamePromptProps
             alt="Friends Chat"
             className="w-16 h-16 mx-auto mb-3 rounded-2xl shadow"
           />
-          <h2 className="text-2xl font-bold text-foreground">Welcome!</h2>
+          <h2 className="text-2xl font-bold text-foreground">Set Up Your Profile</h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Enter your display name to get started.
+            Choose a username and display name to get started.
           </p>
         </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="displayName">Display Name</Label>
@@ -62,19 +74,36 @@ export default function DisplayNamePrompt({ onComplete }: DisplayNamePromptProps
               autoFocus
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="space-y-1.5">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              placeholder="e.g. john_doe"
+              disabled={createProfile.isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              Lowercase letters, numbers, and underscores only.
+            </p>
+          </div>
+
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+
           <Button
             type="submit"
             className="w-full"
-            disabled={createProfile.isPending || !displayName.trim()}
+            disabled={createProfile.isPending || !username.trim() || !displayName.trim()}
           >
             {createProfile.isPending ? (
               <span className="flex items-center gap-2">
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Setting up…
+                Creating profile…
               </span>
             ) : (
-              'Get Started'
+              'Create Profile'
             )}
           </Button>
         </form>

@@ -1,66 +1,59 @@
-import { useState, useRef, type KeyboardEvent } from 'react';
-import { Send, Loader2 } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 import { usePostMessage } from '../hooks/useQueries';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Send } from 'lucide-react';
 
 interface MessageInputProps {
-  sender: string;
+  senderDisplayName: string;
 }
 
-export default function MessageInput({ sender }: MessageInputProps) {
+export default function MessageInput({ senderDisplayName }: MessageInputProps) {
   const [content, setContent] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-  const { mutate: postMessage, isPending } = usePostMessage();
+  const postMessage = usePostMessage();
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     const trimmed = content.trim();
-    if (!trimmed || isPending) return;
+    if (!trimmed || postMessage.isPending) return;
 
-    postMessage(
-      { sender, content: trimmed },
-      {
-        onSuccess: () => {
-          setContent('');
-          inputRef.current?.focus();
-        },
-      }
-    );
+    try {
+      await postMessage.mutateAsync({ sender: senderDisplayName, content: trimmed });
+      setContent('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      handleSubmit(e as unknown as React.FormEvent);
     }
   };
 
   return (
     <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        handleSubmit();
-      }}
-      className="flex gap-2 items-center"
+      onSubmit={handleSubmit}
+      className="flex items-center gap-2 px-4 py-3 border-t border-border bg-card"
     >
       <Input
-        ref={inputRef}
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={e => setContent(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type a message..."
-        disabled={isPending}
-        className="flex-1 rounded-full bg-muted border-0 focus-visible:ring-2 focus-visible:ring-ring px-4 py-2 text-sm"
+        placeholder="Type a message…"
+        disabled={postMessage.isPending}
+        className="flex-1"
         autoComplete="off"
       />
       <Button
         type="submit"
         size="icon"
-        disabled={!content.trim() || isPending}
-        className="rounded-full w-10 h-10 shrink-0 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+        disabled={!content.trim() || postMessage.isPending}
+        className="flex-shrink-0"
       >
-        {isPending ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+        {postMessage.isPending ? (
+          <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
         ) : (
           <Send className="w-4 h-4" />
         )}

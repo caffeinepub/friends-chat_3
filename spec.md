@@ -1,15 +1,14 @@
 # Specification
 
 ## Summary
-**Goal:** Build a simple group chat app where friends can post and read messages in a shared feed.
+**Goal:** Audit and fix all known bugs in the Friends Chat application introduced or discovered after the Version 5 deployment.
 
 **Planned changes:**
-- Backend actor that stores chat messages (sender name, text, timestamp) in stable storage, with `postMessage` and `getMessages` functions
-- Frontend chat UI with a scrollable message feed showing sender, text, and time
-- Display name prompt for new users before they can send messages
-- Text input and Send button at the bottom; submits on Enter or click
-- Auto-scroll to the latest message; feed updates via periodic polling
-- Warm coral/amber color theme with rounded chat bubbles, card-based layout, and friendly sans-serif typography
-- Visually distinct bubbles for the local user vs. others; responsive layout for desktop and mobile
+- Fix public chat message feed: ensure messages load in order, sending works, and the feed auto-scrolls to the latest message.
+- Fix Friends panel: user search, sending/accepting/declining friend requests, and online/offline status indicators.
+- Fix private chat view: correct thread loading, message sending, and auto-scroll behavior.
+- Fix video call modal: camera stream initialization, mute/camera toggles, end-call cleanup, and Escape key handling.
+- Fix user profile setup flow: new users are prompted once, returning users skip the setup modal, and profile data persists correctly.
+- Fix backend Motoko actor functions: ensure all public functions return correct results without trapping, handle concurrent message posting, atomic friend request state transitions, and correctly scoped private message threads.
 
-**User-visible outcome:** Friends can open the app, set a display name, and exchange messages in a shared real-time-feeling chat feed with a warm, social visual design.
+**User-visible outcome:** All core features of the app (public chat, friends panel, private chat, video calls, and profile setup) work correctly without errors or unexpected behavior.

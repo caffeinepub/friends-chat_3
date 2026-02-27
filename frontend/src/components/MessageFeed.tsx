@@ -1,73 +1,59 @@
-import { useEffect, useRef } from 'react';
-import type { Message } from '../backend';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import React, { useEffect, useRef } from 'react';
+import { useMessages } from '../hooks/useQueries';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface MessageFeedProps {
-  messages: Message[];
-  currentUser: string;
-  isLoading: boolean;
+  currentUserDisplayName?: string;
 }
 
-function formatTime(timestamp: bigint): string {
-  const ms = Number(timestamp / BigInt(1_000_000));
-  const date = new Date(ms);
-  const now = new Date();
-  const isToday =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
-
-  if (isToday) {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function getAvatarColor(name: string): string {
+  const colors = [
+    'bg-coral-500',
+    'bg-amber-500',
+    'bg-teal-500',
+    'bg-rose-500',
+    'bg-indigo-500',
+    'bg-emerald-500',
+    'bg-orange-500',
+    'bg-violet-500',
+  ];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' }) +
-    ' ' +
-    date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return colors[Math.abs(hash) % colors.length];
 }
 
 function getInitials(name: string): string {
   return name
     .split(' ')
-    .map((n) => n[0])
+    .map(w => w[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
 }
 
-const AVATAR_COLORS = [
-  'bg-amber-400 text-amber-900',
-  'bg-coral-400 text-white',
-  'bg-teal-400 text-teal-900',
-  'bg-violet-400 text-white',
-  'bg-rose-400 text-white',
-  'bg-sky-400 text-sky-900',
-];
-
-function getAvatarColor(name: string): string {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
-}
-
-export default function MessageFeed({ messages, currentUser, isLoading }: MessageFeedProps) {
+export default function MessageFeed({ currentUserDisplayName }: MessageFeedProps) {
+  const { data: messages, isLoading, error } = useMessages();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   if (isLoading) {
     return (
-      <div className="h-full flex flex-col gap-4 p-4">
+      <div className="flex-1 p-4 space-y-3 overflow-y-auto">
         {[...Array(5)].map((_, i) => (
-          <div key={i} className={`flex gap-3 ${i % 2 === 0 ? '' : 'flex-row-reverse'}`}>
-            <Skeleton className="w-9 h-9 rounded-full shrink-0" />
-            <div className="flex flex-col gap-1 max-w-xs">
-              <Skeleton className="h-3 w-20" />
-              <Skeleton className="h-12 w-48 rounded-2xl" />
+          <div key={i} className="flex items-start gap-3">
+            <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+            <div className="space-y-1 flex-1">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-10 w-3/4 rounded-2xl" />
             </div>
           </div>
         ))}
@@ -75,64 +61,69 @@ export default function MessageFeed({ messages, currentUser, isLoading }: Messag
     );
   }
 
-  if (messages.length === 0) {
+  if (error) {
     return (
-      <div className="h-full flex flex-col items-center justify-center gap-3 text-center px-6">
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-3xl">
-          💬
-        </div>
-        <p className="text-lg font-semibold text-foreground">No messages yet</p>
-        <p className="text-sm text-muted-foreground">
-          Be the first to say hello to your friends!
-        </p>
+      <div className="flex-1 flex items-center justify-center p-8">
+        <p className="text-destructive text-sm">Failed to load messages. Please try again.</p>
       </div>
     );
   }
 
+  const sortedMessages = [...(messages ?? [])].sort(
+    (a, b) => Number(a.timestamp) - Number(b.timestamp)
+  );
+
   return (
-    <ScrollArea className="h-full">
-      <div className="flex flex-col gap-3 px-4 py-4">
-        {messages.map((msg, idx) => {
-          const isOwn = msg.sender === currentUser;
-          const avatarColor = getAvatarColor(msg.sender);
-
-          return (
+    <div
+      ref={containerRef}
+      className="flex-1 overflow-y-auto p-4 space-y-3"
+      style={{ minHeight: 0 }}
+    >
+      {sortedMessages.length === 0 && (
+        <div className="flex items-center justify-center h-full">
+          <p className="text-muted-foreground text-sm">No messages yet. Say hello!</p>
+        </div>
+      )}
+      {sortedMessages.map((msg, idx) => {
+        const isOwn = msg.sender === currentUserDisplayName;
+        const avatarColor = getAvatarColor(msg.sender);
+        const initials = getInitials(msg.sender);
+        return (
+          <div
+            key={idx}
+            className={`flex items-end gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}
+          >
+            {/* Avatar */}
             <div
-              key={idx}
-              className={`flex gap-2.5 items-end ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0 ${avatarColor}`}
             >
-              {/* Avatar */}
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${avatarColor}`}
-              >
-                {getInitials(msg.sender)}
-              </div>
-
-              {/* Bubble */}
-              <div className={`flex flex-col gap-1 max-w-[70%] ${isOwn ? 'items-end' : 'items-start'}`}>
-                {!isOwn && (
-                  <span className="text-xs font-semibold text-muted-foreground px-1">
-                    {msg.sender}
-                  </span>
-                )}
-                <div
-                  className={`px-4 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${
-                    isOwn
-                      ? 'bg-primary text-primary-foreground rounded-br-sm'
-                      : 'bg-card border border-border text-foreground rounded-bl-sm'
-                  }`}
-                >
-                  {msg.content}
-                </div>
-                <span className="text-[10px] text-muted-foreground px-1">
-                  {formatTime(msg.timestamp)}
-                </span>
-              </div>
+              {initials}
             </div>
-          );
-        })}
-        <div ref={bottomRef} />
-      </div>
-    </ScrollArea>
+            {/* Bubble */}
+            <div className={`max-w-[70%] flex flex-col ${isOwn ? 'items-end' : 'items-start'}`}>
+              <span className="text-xs text-muted-foreground mb-1 break-all whitespace-normal w-full">
+                {msg.sender}
+              </span>
+              <div
+                className={`px-4 py-2 rounded-2xl text-sm break-words ${
+                  isOwn
+                    ? 'bg-primary text-primary-foreground rounded-br-sm'
+                    : 'bg-card border border-border text-foreground rounded-bl-sm'
+                }`}
+              >
+                {msg.content}
+              </div>
+              <span className="text-xs text-muted-foreground mt-1">
+                {new Date(Number(msg.timestamp) / 1_000_000).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+            </div>
+          </div>
+        );
+      })}
+      <div ref={bottomRef} />
+    </div>
   );
 }

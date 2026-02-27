@@ -1,37 +1,43 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T01:09:44.582Z",
-  "summary": "The diff implements most requirements well. The backend actor, chat UI with display name prompt, polling via React Query, auto-scroll, Enter/click submit, and warm coral/amber theme are all present. However, the backend uses a mutable variable for message storage without the stable keyword, which means messages will NOT be persisted across canister upgrades — violating REQ-1's AC. Everything else appears to be implemented.",
-  "missing_requirements": [
+  "generatedAt": "2026-02-27T02:45:43.114Z",
+  "summary": "The diff implements comprehensive fixes across all six requirements (REQ-9 through REQ-14). Backend fixes in main.mo address postMessage, getMessages, createUserProfile, getUserProfile, friend request functions, private threads, and updateOnlineStatus. Frontend fixes cover MessageFeed auto-scroll, MessageInput, FriendsPanel, FriendListItem, FriendRequestItem, PrivateChatView, ProfileSetupModal, DisplayNamePrompt, VideoCallModal, and useVideoCall hook. A migration module is also added. The implementation appears thorough and matches the requested acceptance criteria well.",
+  "missing_requirements": [],
+  "hallucinated_features": [
     {
-      "id": "REQ-1",
-      "requirement": "Messages are persisted in stable storage across upgrades",
-      "reason": "The backend uses `let messagesList = List.empty<Message>()` without the `stable` keyword, so messages will be lost on canister upgrades. Stable storage persistence is not implemented.",
+      "description": "A migration module (backend/migration.mo) was added to support data migration on upgrades using a 'with migration' clause in the actor.",
+      "reason": "No requirement in the BuildRequest asked for a data migration module or upgrade migration support. The constraints only said not to change the existing data model or break backwards compatibility, not to implement an explicit migration module.",
       "evidence": [
+        "backend/migration.mo",
         "backend/main.mo"
+      ]
+    },
+    {
+      "description": "Open Graph and Twitter Card meta tags were added to index.html along with an updated app title and meta description for App Market publishing.",
+      "reason": "None of REQ-9 through REQ-14 request social sharing metadata or App Market preparation updates. The non-goals explicitly exclude adding new features beyond what is already implemented.",
+      "evidence": [
+        "frontend-file-summaries.txt"
       ]
     }
   ],
-  "hallucinated_features": [],
-  "confidence": 0.88,
+  "confidence": 0.78,
   "changed_files": [
-    "all_files_summary.json",
     "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/index.css",
-    "frontend/index.html",
-    "frontend/src/App.tsx",
     "frontend/src/components/ChatView.tsx",
     "frontend/src/components/DisplayNamePrompt.tsx",
+    "frontend/src/components/FriendListItem.tsx",
+    "frontend/src/components/FriendRequestItem.tsx",
+    "frontend/src/components/FriendsPanel.tsx",
     "frontend/src/components/MessageFeed.tsx",
     "frontend/src/components/MessageInput.tsx",
-    "frontend/src/hooks/useActor.ts",
-    "frontend/src/hooks/useInternetIdentity.ts",
+    "frontend/src/components/PrivateChatView.tsx",
+    "frontend/src/components/ProfileSetupModal.tsx",
+    "frontend/src/components/VideoCallModal.tsx",
     "frontend/src/hooks/useQueries.ts",
-    "frontend/src/index.css",
-    "frontend/src/main.tsx",
-    "frontend/tailwind.config.js",
+    "frontend/src/hooks/useVideoCall.ts",
     "project_state.json"
   ]
 }

@@ -2,45 +2,115 @@
   "kind": "feature_evidence_report",
   "features": [
     {
-      "featureId": "feature-build-a-chat-ui-that-displays-a-scrollable-feed-of-messages-showing-the-sender-name-message-text-and-time-sent-include-a-text-input-and-a-send-button-at-the-bottom-to-submit-new-messages-the-user-must-enter-a-display-name-before-chatting",
-      "featureTitle": "Build a chat UI that displays a scrollable feed of messages showing the sender name, message text, and time sent. Include a text input and a send button at the bottom to submit new messages. The user must enter a display name before chatting.",
+      "featureId": "feature-audit-and-fix-bugs-in-the-public-chat-message-feed-ensure-messages-load-correctly-sending-a-new-message-works-without-errors-and-the-message-feed-auto-scrolls-to-the-latest-message-after-posting",
+      "featureTitle": "Audit and fix bugs in the public chat message feed: ensure messages load correctly, sending a new message works without errors, and the message feed auto-scrolls to the latest message after posting.",
       "files": [
-        "frontend/src/App.tsx",
-        "frontend/src/components/ChatView.tsx",
-        "frontend/src/components/DisplayNamePrompt.tsx",
         "frontend/src/components/MessageFeed.tsx",
-        "frontend/src/components/MessageInput.tsx"
+        "frontend/src/components/MessageInput.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "camera@1.0.0"
       ],
       "testIds": [
-        "REQ-2"
+        "REQ-9"
       ],
       "confidence": "high"
     },
     {
-      "featureId": "feature-apply-a-warm-modern-visual-theme-with-a-bold-color-palette-e-g-coral-amber-tones-clean-card-based-layout-rounded-chat-bubbles-and-friendly-sans-serif-typography-the-design-should-feel-social-approachable-and-consistent-throughout-the-app",
-      "featureTitle": "Apply a warm, modern visual theme with a bold color palette (e.g., coral/amber tones), clean card-based layout, rounded chat bubbles, and friendly sans-serif typography. The design should feel social, approachable, and consistent throughout the app.",
+      "featureId": "feature-audit-and-fix-bugs-in-the-friends-panel-user-search-by-username-returns-correct-results-sending-a-friend-request-succeeds-incoming-friend-requests-can-be-accepted-or-declined-and-the-friend-list-displays-with-accurate-online-offline-status-indicators",
+      "featureTitle": "Audit and fix bugs in the Friends panel: user search by username returns correct results, sending a friend request succeeds, incoming friend requests can be accepted or declined, and the friend list displays with accurate online/offline status indicators.",
       "files": [
-        "frontend/src/components/ChatView.tsx",
-        "frontend/src/components/MessageFeed.tsx",
-        "frontend/src/index.css",
-        "frontend/tailwind.config.js"
+        "frontend/src/components/FriendListItem.tsx",
+        "frontend/src/components/FriendRequestItem.tsx",
+        "frontend/src/components/FriendsPanel.tsx",
+        "frontend/src/hooks/useQueries.ts"
       ],
       "components": [
         "core-infrastructure@1.0.2",
         "shadcn-ui@1.0.0",
         "build-template-react@1.0.0",
         "initial-app@1.0.0",
-        "github-export-icp-cli@1.0.0"
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "camera@1.0.0"
       ],
       "testIds": [
-        "REQ-3"
+        "REQ-10"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-audit-and-fix-bugs-in-the-private-chat-view-opening-a-private-chat-with-a-friend-loads-the-correct-message-thread-sending-messages-in-a-private-thread-works-and-the-view-auto-scrolls-to-the-latest-message",
+      "featureTitle": "Audit and fix bugs in the private chat view: opening a private chat with a friend loads the correct message thread, sending messages in a private thread works, and the view auto-scrolls to the latest message.",
+      "files": [
+        "frontend/src/components/ChatView.tsx",
+        "frontend/src/components/PrivateChatView.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-11"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-audit-and-fix-bugs-in-the-video-call-modal-the-video-call-button-in-both-the-friends-panel-and-the-private-chat-view-opens-the-videocallmodal-correctly-the-local-camera-stream-initialises-without-errors-mute-camera-toggle-controls-function-as-expected-and-ending-the-call-properly-cleans-up-the-stream-and-closes-the-modal",
+      "featureTitle": "Audit and fix bugs in the video call modal: the video call button in both the Friends panel and the Private Chat view opens the VideoCallModal correctly, the local camera stream initialises without errors, mute/camera toggle controls function as expected, and ending the call properly cleans up the stream and closes the modal.",
+      "files": [
+        "frontend/src/components/FriendsPanel.tsx",
+        "frontend/src/components/PrivateChatView.tsx",
+        "frontend/src/components/VideoCallModal.tsx",
+        "frontend/src/hooks/useVideoCall.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-12"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-audit-and-fix-bugs-in-the-user-profile-setup-flow-the-displaynameprompt-and-profilesetupmodal-correctly-create-or-retrieve-a-user-profile-on-first-launch-and-returning-users-are-not-re-prompted-unnecessarily",
+      "featureTitle": "Audit and fix bugs in the user profile setup flow: the DisplayNamePrompt and ProfileSetupModal correctly create or retrieve a user profile on first launch, and returning users are not re-prompted unnecessarily.",
+      "files": [
+        "frontend/src/components/ChatView.tsx",
+        "frontend/src/components/DisplayNamePrompt.tsx",
+        "frontend/src/components/ProfileSetupModal.tsx",
+        "frontend/src/hooks/useQueries.ts"
+      ],
+      "components": [
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0",
+        "authorization@4.0.0",
+        "camera@1.0.0"
+      ],
+      "testIds": [
+        "REQ-13"
       ],
       "confidence": "high"
     }
