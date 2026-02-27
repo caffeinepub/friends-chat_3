@@ -1,43 +1,38 @@
 {
   "kind": "build_request",
-  "title": "Fix video call feature bugs",
+  "title": "Fix remote audio not audible during video calls",
   "projectName": "Friends Chat",
   "priority": "high",
   "requirements": [
     {
-      "id": "REQ-15",
-      "text": "Audit and fix all bugs in the video call feature end-to-end: the video call button in both FriendListItem (Friends panel) and PrivateChatView header must correctly open the VideoCallModal; the useVideoCall hook must successfully request and initialise the local camera/microphone media stream without errors; mute (audio) and camera toggle controls must reflect the correct state and actually mute/unmute or enable/disable the corresponding media track; ending the call must stop all media tracks, release the stream, and close/unmount the VideoCallModal cleanly; and the simulated 'Calling…' → 'Connected' state transition must work as intended. Ensure no unhandled promise rejections or console errors occur during the full call lifecycle.",
+      "id": "REQ-16",
+      "text": "Fix the video call feature so that the remote party's audio is audible during a call. The VideoCallModal must correctly attach the remote media stream (including audio tracks) to the remote video/audio element so the local user can hear the other person. Ensure the audio element or video element used for remote playback has its srcObject set to the remote stream, is not muted, and that autoPlay is set. Also verify that getUserMedia requests audio: true so the local microphone track is captured and available for the simulated remote audio path.",
       "target": "frontend",
       "source": {
         "messageIds": [
-          "msg-7"
+          "msg-1"
         ],
         "quotes": [
-          "The video call feature isn't working"
+          "I can't hear the other person's on the call"
         ]
       },
       "acceptanceCriteria": [
-        "Clicking the video call button on a friend list item opens the VideoCallModal without errors.",
-        "Clicking the video call button in the private chat header opens the VideoCallModal without errors.",
-        "The local camera stream initialises successfully and the local video feed is visible in the picture-in-picture area.",
-        "The mute button toggles the audio track on/off and its icon/label reflects the current muted state.",
-        "The camera toggle button enables/disables the video track and its icon/label reflects the current camera-off state.",
-        "The simulated 'Calling…' state transitions to 'Connected' after the expected delay.",
-        "Clicking 'End Call' stops all media tracks, releases the media stream, and closes the VideoCallModal.",
-        "No unhandled promise rejections or JavaScript console errors appear during the full call lifecycle.",
-        "The VideoCallModal UI matches the existing warm coral/amber theme."
+        "The VideoCallModal renders a dedicated audio or video element for the remote stream that has its srcObject set and is not muted.",
+        "getUserMedia in useVideoCall.ts requests both audio and video (audio: true, video: true).",
+        "The remote audio element has autoPlay set to true so playback begins without user interaction.",
+        "No console errors related to audio playback or media streams occur during the call lifecycle.",
+        "Ending the call stops all media tracks and removes the srcObject from the remote audio/video element."
       ]
     }
   ],
   "constraints": [
-    "Do not change any backend Motoko logic — this is a frontend-only fix.",
-    "Do not modify files under frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, or frontend/src/components/ui.",
-    "True peer-to-peer WebRTC is not available; the remote video area must remain a simulated placeholder."
+    "Do not alter immutable frontend paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui.",
+    "Since true peer-to-peer WebRTC is not available, the fix must work within the existing simulated call architecture."
   ],
   "nonGoals": [
-    "Real peer-to-peer WebRTC signalling or actual remote video streams.",
-    "Changes to public chat, friends panel search, friend requests, or private chat messaging.",
-    "Backend schema or Motoko actor changes."
+    "Implementing real peer-to-peer WebRTC audio/video transmission.",
+    "Changes to the backend Motoko actor.",
+    "Changes to any other feature outside of the video call audio fix."
   ],
   "imageRequirements": {
     "required": [],

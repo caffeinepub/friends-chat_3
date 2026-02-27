@@ -15,6 +15,7 @@ interface VideoCallModalProps {
   onToggleCamera: () => void;
   onEndCall: () => void;
   localVideoRef: React.RefObject<HTMLVideoElement | null>;
+  remoteAudioRef: React.RefObject<HTMLAudioElement | null>;
 }
 
 export default function VideoCallModal({
@@ -27,6 +28,7 @@ export default function VideoCallModal({
   onToggleCamera,
   onEndCall,
   localVideoRef,
+  remoteAudioRef,
 }: VideoCallModalProps) {
   const { data: friendProfile } = useGetUserProfile(friendPrincipal);
 
@@ -41,30 +43,30 @@ export default function VideoCallModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onEndCall]);
 
-  // When the video element mounts (or isCameraOff changes to false), try to attach
-  // the stream. The hook's localVideoRef is a shared ref — setting srcObject here
-  // ensures the stream is wired even if it was ready before the element mounted.
+  // Local video element ref — synced with the hook's localVideoRef
   const videoElRef = useRef<HTMLVideoElement | null>(null);
   const setVideoRef = (el: HTMLVideoElement | null) => {
     videoElRef.current = el;
-    // Sync the hook's ref so the hook can also access the element
     (localVideoRef as React.MutableRefObject<HTMLVideoElement | null>).current = el;
-    if (el && el.srcObject === null) {
-      // The hook will have stored the stream in its own ref; trigger attachment
-      // by dispatching a custom event the hook can listen to — but simpler:
-      // just check if there's a stream on the hook ref by reading srcObject
-      // We rely on the hook's attachStream being called after mount via useEffect below
+    if (el && el.srcObject) {
+      el.play().catch(() => {});
     }
   };
 
-  // Notify the hook to attach the stream once the video element is in the DOM.
-  // We do this by firing a small effect whenever isCameraOff transitions to false.
+  // Remote audio element ref — synced with the hook's remoteAudioRef
+  const setRemoteAudioRef = (el: HTMLAudioElement | null) => {
+    (remoteAudioRef as React.MutableRefObject<HTMLAudioElement | null>).current = el;
+    if (el && el.srcObject) {
+      el.play().catch((err) => {
+        console.warn('Remote audio play error:', err);
+      });
+    }
+  };
+
+  // When isCameraOff transitions to false, ensure the video element plays
   useEffect(() => {
-    if (!isCameraOff && videoElRef.current) {
-      // If the video element has no srcObject yet, try to play whatever is set
-      if (videoElRef.current.srcObject) {
-        videoElRef.current.play().catch(() => {});
-      }
+    if (!isCameraOff && videoElRef.current && videoElRef.current.srcObject) {
+      videoElRef.current.play().catch(() => {});
     }
   }, [isCameraOff]);
 
@@ -80,7 +82,19 @@ export default function VideoCallModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-call-bg">
-      {/* Remote video area (simulated) */}
+      {/*
+        Hidden remote audio element — receives the remote media stream.
+        Must NOT be muted so the user can hear the other party.
+        autoPlay ensures playback starts as soon as srcObject is set.
+      */}
+      <audio
+        ref={setRemoteAudioRef}
+        autoPlay
+        playsInline
+        style={{ display: 'none' }}
+      />
+
+      {/* Remote video area */}
       <div className="relative w-full h-full flex flex-col items-center justify-center">
         {/* Friend avatar / remote video placeholder */}
         <div className="flex flex-col items-center gap-4 mb-8">
@@ -97,7 +111,7 @@ export default function VideoCallModal({
         {mediaError && (
           <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive/20 border border-destructive/40 text-destructive mb-4 max-w-xs text-sm">
             <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            <span>Camera unavailable: {mediaError}</span>
+            <span>Camera/mic unavailable: {mediaError}</span>
           </div>
         )}
 

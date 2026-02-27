@@ -1,10 +1,10 @@
 {
   "schemaVersion": "1.0.0",
-  "projectStateVersion": 15,
+  "projectStateVersion": 17,
   "summary": "A chat app for a user and their friends to communicate, with plans to add a friends/contacts system including adding friends by username, seeing who's online, and private chats. FaceTime (video calling) feature has been requested.",
   "architectural_notes": [],
   "known_issues": [
-    "Video call feature is not working in production (Version 6)"
+    "Remote audio not audible during video calls (Version 7)"
   ],
   "isFixRequest": true,
   "existing_features": [
@@ -101,6 +101,14 @@
       "title": "Audit and fix all bugs in the video call feature end-to-end: the video call button in both FriendListItem (Friends panel) and PrivateChatView header must correctly open the VideoCallModal; the useVideoCall hook must successfully request and initialise the local camera/microphone media stream without errors; mute (audio) and camera toggle controls must reflect the correct state and actually mute/unmute or enable/disable the corresponding media track; ending the call must stop all media tracks, release the stream, and close/unmount the VideoCallModal cleanly; and the simulated 'Calling…' → 'Connected' state transition must work as intended. Ensure no unhandled promise rejections or console errors occur during the full call lifecycle.",
       "reqIds": [
         "REQ-15"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-fix-the-video-call-feature-so-that-the-remote-party-s-audio-is-audible-during-a-call-the-videocallmodal-must-correctly-attach-the-remote-media-stream-including-audio-tracks-to-the-remote-video-audio-element-so-the-local-user-can-hear-the-other-person-ensure-the-audio-element-or-video-element-used-for-remote-playback-has-its-srcobject-set-to-the-remote-stream-is-not-muted-and-that-autoplay-is-set-also-verify-that-getusermedia-requests-audio-true-so-the-local-microphone-track-is-captured-and-available-for-the-simulated-remote-audio-path",
+      "title": "Fix the video call feature so that the remote party's audio is audible during a call. The VideoCallModal must correctly attach the remote media stream (including audio tracks) to the remote video/audio element so the local user can hear the other person. Ensure the audio element or video element used for remote playback has its srcObject set to the remote stream, is not muted, and that autoPlay is set. Also verify that getUserMedia requests audio: true so the local microphone track is captured and available for the simulated remote audio path.",
+      "reqIds": [
+        "REQ-16"
       ],
       "version": 1
     }

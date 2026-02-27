@@ -1,7 +1,7 @@
 {
   "kind": "coverage_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T02:56:01.385Z",
+  "generatedAt": "2026-02-27T03:02:28.969Z",
   "sources": {
     "buildRequest": true,
     "implementationPlan": true
@@ -11,20 +11,16 @@
     "implemented": 1,
     "items": [
       {
-        "id": "REQ-15",
-        "summary": "Audit and fix all bugs in the video call feature end-to-end: the video call button in both FriendListItem (Friends panel) and PrivateChatView header must correctly open the VideoCallModal; the useVideoCall hook must successfully request and initialise the local camera/microphone media stream without errors; mute (audio) and camera toggle controls must reflect the correct state and actually mute/unmute or enable/disable the corresponding media track; ending the call must stop all media tracks, release the stream, and close/unmount the VideoCallModal cleanly; and the simulated 'Calling…' → 'Connected' state transition must work as intended. Ensure no unhandled promise rejections or console errors occur during the full call lifecycle.",
+        "id": "REQ-16",
+        "summary": "Fix the video call feature so that the remote party's audio is audible during a call. The VideoCallModal must correctly attach the remote media stream (including audio tracks) to the remote video/audio element so the local user can hear the other person. Ensure the audio element or video element used for remote playback has its srcObject set to the remote stream, is not muted, and that autoPlay is set. Also verify that getUserMedia requests audio: true so the local microphone track is captured and available for the simulated remote audio path.",
         "status": "implemented",
         "plannedFiles": [
           "frontend/src/hooks/useVideoCall.ts",
-          "frontend/src/components/VideoCallModal.tsx",
-          "frontend/src/components/FriendListItem.tsx",
-          "frontend/src/components/PrivateChatView.tsx",
-          "frontend/src/components/ChatView.tsx"
+          "frontend/src/components/VideoCallModal.tsx"
         ],
         "matchedFiles": [
           "frontend/src/hooks/useVideoCall.ts",
-          "frontend/src/components/VideoCallModal.tsx",
-          "frontend/src/components/ChatView.tsx"
+          "frontend/src/components/VideoCallModal.tsx"
         ]
       }
     ]

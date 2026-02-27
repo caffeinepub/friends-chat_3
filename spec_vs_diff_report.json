@@ -1,11 +1,11 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-27T02:56:01.383Z",
-  "summary": "The diff addresses REQ-15 comprehensively. All five modified files work together to fix the video call feature end-to-end: ChatView.tsx correctly mounts the modal before starting the call, useVideoCall.ts rewrites the hook with proper stream lifecycle management, VideoCallModal.tsx wires the shared video ref, and CSS/Tailwind tokens support the themed UI. All acceptance criteria appear to be covered.",
+  "generatedAt": "2026-02-27T03:02:28.966Z",
+  "summary": "The diff implements the required fix for remote audio in video calls. The changes cover: useVideoCall.ts requesting audio:true in getUserMedia, creating a simulated remote stream from a cloned audio track, exposing remoteAudioRef, attaching srcObject and calling play() on the remote audio element, and clearing srcObject on endCall. VideoCallModal renders a dedicated audio element with autoPlay, not muted, and synced to remoteAudioRef. ChatView passes remoteAudioRef to VideoCallModal. All REQ-16 acceptance criteria appear to be addressed.",
   "missing_requirements": [],
   "hallucinated_features": [],
-  "confidence": 0.88,
+  "confidence": 0.93,
   "changed_files": [
     "frontend-file-summaries.txt",
     "frontend/src/components/ChatView.tsx",
